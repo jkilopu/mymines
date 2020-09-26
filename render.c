@@ -2,7 +2,8 @@
  * note:
  * 1. SDL is actually quiet easy to use.(Despite a lot of setup and error detection)
  * 2. Still have questions in global variables and module building, is there a most confortable and efficient way?
- * 3. No serious bug found while developing.
+ * 3. Some source file merely change.(Thanks to modularizition developing?)
+ * 4. No serious bug found while developing.
  */
 
 #include <SDL2/SDL.h>
