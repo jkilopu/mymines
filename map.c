@@ -57,7 +57,7 @@ void remove_mine(Map map, short y, short x)
     {
         short next_y = y + directions[i][0];
         short next_x = x + directions[i][1];
-        if(in_map_range(next_y, next_x, map)&& !has_mine(next_y, next_x, map))
+        if(in_map_range(next_y, next_x, map) && !has_mine(next_y, next_x, map))
             map->arr[next_y][next_x]--;
     }
 }
@@ -70,6 +70,19 @@ unsigned short cnt_mines(Map map, short y, short x)
             short next_y = y + directions[i][0];
             short next_x = x + directions[i][1];
             if(in_map_range(next_y, next_x, map) && has_mine(next_y, next_x, map))
+                cnt++;
+    }
+    return cnt;
+}
+
+unsigned short cnt_flags(Map map, short y, short x)
+{
+    unsigned short cnt = 0;
+    for (int i = 0; i < 8; i++)
+    {
+            short next_y = y + directions[i][0];
+            short next_x = x + directions[i][1];
+            if(in_map_range(next_y, next_x, map) && has_flag(map->arr[next_y][next_x]))
                 cnt++;
     }
     return cnt;

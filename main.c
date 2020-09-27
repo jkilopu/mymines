@@ -35,6 +35,7 @@ int main(void)
                         case SDL_BUTTON(SDL_BUTTON_LEFT):
                             if(click_map(map, (short) y, (short) x, &first_click))
                             {
+                                SDL_RenderPresent(main_renderer); // show mines
                                 sleep(5);
                                 restart(&map, 16, 16, 40);
                                 first_click = true;
@@ -45,7 +46,9 @@ int main(void)
                                 restart(&map, 16, 16, 40);
                                 first_click = true;
                             }
+                            break;
                         case SDL_BUTTON(SDL_BUTTON_RIGHT):
+                            set_draw_flag(map, (unsigned short)y, (unsigned short)x);
                             break;
                         default:
                             break;

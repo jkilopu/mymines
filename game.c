@@ -7,8 +7,6 @@
 #include "render.h"
 #include "fatal.h"
 
-#define is_digit(n) (n >= '0' && n <= '9')
-
 extern unsigned short opened_blocks;
 extern short directions[8][2];
 
@@ -38,9 +36,9 @@ void show_unknown(unsigned short col, unsigned short row)
 /* Return true if click on a mine */
 bool click_map(Map map, short y, short x, bool *first_click)
 {
-    if (!in_map_range(y, x, map))
+    if (!in_map_range(y, x, map) || has_flag(map->arr[y][x]))
         return false;
-    if (*first_click)
+    if (first_click != NULL && *first_click)
     {
         *first_click = false;
         if (has_mine(y, x, map))
@@ -53,9 +51,11 @@ bool click_map(Map map, short y, short x, bool *first_click)
             map->arr[y][x] = cnt_mines(map, y, x);
         }
     }
+    if (is_shown(y, x, map))
+        return open_with_flag(map, y, x);
     if (has_mine(y, x, map))
     {
-        draw_block(T_MINE, y, x);
+        draw_block(T_EXPLODED_MINE, y, x);
         return true;
     }
     else
@@ -65,7 +65,11 @@ bool click_map(Map map, short y, short x, bool *first_click)
 
 void show_block(Map map, short y, short x)
 {
-    if (!in_map_range(y, x, map) || map->arr[y][x] == EMPTY || is_digit(map->arr[y][x]))
+    if (!in_map_range(y, x, map))
+        return;
+    if (has_flag(map->arr[y][x])) // For block REACHED by "show_block" (not CLICKED)
+        unset_flag(map->arr[y][x]);
+    if (map->arr[y][x] == EMPTY || is_shown(y, x, map))
         return;
     if (map->arr[y][x] >= 1 && map->arr[y][x] <= 8)
     {
@@ -83,6 +87,39 @@ void show_block(Map map, short y, short x)
         short next_x = x + directions[i][1];
         show_block(map, next_y, next_x);
     }
+}
+
+void set_draw_flag(Map map, unsigned short y, unsigned short x)
+{
+    if (!in_map_range(y, x, map) || is_shown(y, x, map))
+        return;
+    if (has_flag(map->arr[y][x]))
+    {
+        unset_flag(map->arr[y][x]);
+        draw_block(T_HIDDEN, y, x);
+    }
+    else
+    {
+        set_flag(map->arr[y][x]);
+        draw_block(T_FLAG, y, x);
+    }
+}
+
+bool open_with_flag(Map map, unsigned short y, unsigned short x)
+{
+    bool step_on_mine = false; // The final state
+    bool once = false; // For each auto click
+    if (cnt_flags(map, y, x) != map->arr[y][x] - '0')
+        return false;
+    for (int i = 0; i < 8; i++)
+    {
+        short next_y = y + directions[i][0];
+        short next_x = x + directions[i][1];
+        if(in_map_range(next_y, next_x, map) && !is_shown(next_y, next_x, map)) // I just want to open surroundings(8 blocks)
+            once = click_map(map, next_y, next_x, NULL);
+        step_on_mine = (step_on_mine ? step_on_mine : once);
+    }
+    return step_on_mine;
 }
 
 void restart(Map *mP, unsigned short col, unsigned short row, unsigned short n_mines)
