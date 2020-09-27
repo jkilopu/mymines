@@ -33,6 +33,25 @@ void show_unknown(unsigned short col, unsigned short row)
             draw_block(T_HIDDEN, i, j);
 }
 
+/* Show all the mines except the exploded one.
+ * 
+ * Since I didn't record the pos of all mines,
+ * (because its useless in other conditions)
+ * I iterate the map to show all mines.
+ * (though it may be inefficient)
+ */
+void show_mines(Map map)
+{
+   for (int i = 0; i < map->col; i++)
+        for (int j = 0; j < map->row; j++)
+        {
+            if (has_flag(map->arr[i][j]))
+                unset_flag(map->arr[i][j]);
+            if (has_mine(i, j, map) && !has_exploded_mine(i, j, map))
+                draw_block(T_MINE, i, j);
+        }
+}
+
 /* Return true if click on a mine */
 bool click_map(Map map, short y, short x, bool *first_click)
 {
@@ -55,6 +74,7 @@ bool click_map(Map map, short y, short x, bool *first_click)
         return open_with_flag(map, y, x);
     if (has_mine(y, x, map))
     {
+        map->arr[y][x] = EXPLODED_MINE;
         draw_block(T_EXPLODED_MINE, y, x);
         return true;
     }

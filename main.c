@@ -35,15 +35,18 @@ int main(void)
                         case SDL_BUTTON(SDL_BUTTON_LEFT):
                             if(click_map(map, (short) y, (short) x, &first_click))
                             {
+                                show_mines(map);
                                 SDL_RenderPresent(main_renderer); // show mines
-                                sleep(5);
                                 restart(&map, 16, 16, 40);
+                                sleep(5);
                                 first_click = true;
                             }
                             if (opened_blocks == map->col * map->row - 40)
                             {
-                                sleep(5);
+                                show_mines(map);
+                                SDL_RenderPresent(main_renderer); // show mines
                                 restart(&map, 16, 16, 40);
+                                sleep(5);
                                 first_click = true;
                             }
                             break;

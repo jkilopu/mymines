@@ -8,6 +8,7 @@ void setup(void);
 void start(Map *mP, unsigned short col, unsigned short row, unsigned short n_mines);
 
 void show_unknown(unsigned short col, unsigned short row);
+void show_mines(Map map);
 bool click_map(Map map, short y, short x, bool *first_click);
 void show_block(Map map, short y, short x);
 void set_draw_flag(Map map, unsigned short y, unsigned short x);
