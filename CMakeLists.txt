@@ -1,5 +1,5 @@
 # 最低CMake版本要求
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.12.0)
 
 # 项目名称
 project(mymine)
@@ -18,7 +18,6 @@ find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 
 message("incDir: ${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS}")
-include_directories(${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 
-#添加子目录，使子目录中的CMakelists.txt被执行
+# 添加子目录，使子目录中的CMakelists.txt被执行
 add_subdirectory(src)
