@@ -89,7 +89,7 @@ void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
 /* Set the window size
  * The renderer is related to window,
  * and the texture is related to renderer.
- * So I have to delet and reload... That's painful.
+ * So I have to delete and reload... That's painful.
  */
 void set_main_window_size(int w, int h)
 {
