@@ -3,10 +3,9 @@
 #include "render.h"
 #include "block.h"
 #include "button.h"
+#include "timer.h"
 #include "fatal.h"
 #include <stdbool.h>
-
-#include <unistd.h>
 
 static SDL_Texture *menu;
 extern SDL_Texture *block_texture[];
@@ -32,14 +31,16 @@ void get_settings(Settings *p_s)
     };
     
     draw_menu(digits, buttons, 6);
-    select(digits, buttons, 6);
+    change_digits(digits, buttons, 6);
     
     p_s->map_width = digits[0].data * 10 + digits[1].data;
     p_s->map_height = digits[2].data * 10 + digits[3].data;
     p_s->n_mine = digits[4].data * 10 + digits[5].data;
-    p_s->block_size = 600 / (p_s->map_width < p_s->map_height ? p_s->map_width : p_s->map_height);
-    p_s->window_height = p_s->map_height * p_s->block_size;
-    p_s->window_width = p_s->map_width * p_s->block_size;
+    if (!p_s->map_width || !p_s->map_height || !p_s->n_mine || p_s->n_mine >= p_s->map_width * p_s->map_height)
+        Error("Invalid option!");
+    p_s->block_size = 600 / (p_s->map_width > p_s->map_height ? p_s->map_width : p_s->map_height);
+    p_s->window_height = p_s->map_height * p_s->block_size; 
+    p_s->window_width = p_s->map_width * p_s->block_size + TIME_REGION_WIDTH;
 }
 
 static void draw_menu(Digit ds[], Button bs[], int num)
@@ -61,7 +62,7 @@ static void draw_menu(Digit ds[], Button bs[], int num)
     menu = NULL;
 }
 
-static void select(Digit ds[], Button bs[], int num)
+static void change_digits(Digit ds[], Button bs[], int num)
 {
     bool done = false;
     SDL_Event e;
@@ -102,6 +103,12 @@ static void select(Digit ds[], Button bs[], int num)
             }
             else
                 done = true;
+        }
+        else if(e.type == SDL_QUIT)
+        {
+            delete_media();
+            finish_sdl();
+            exit(0);
         }
     }
 }

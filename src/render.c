@@ -18,15 +18,15 @@ extern SDL_Texture *block_texture[TEXTURE_NUM];
 
 void init_sdl(void)
 {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-        SDL_FatalError("SDL could not initialize!\n%s", SDL_GetError());
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
+        SDL_FatalError("SDL could not initialize!", SDL_GetError());
     // Scale is needed, so try to make it better.
     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
-        SDL_Error("SDL set scale hint error!\n%s", SDL_GetError());
+        SDL_Error("SDL set scale hint error!", SDL_GetError());
     
     main_window = SDL_CreateWindow("mymines", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAIN_WIN_WIDTH, MAIN_WIN_HEIGHT, SDL_WINDOW_SHOWN);
     if (main_window == NULL)
-        SDL_FatalError("Window could not be created!\n%s", SDL_GetError());
+        SDL_FatalError("Window could not be created!", SDL_GetError());
     main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED);
     if (main_renderer == NULL)
         SDL_FatalError("Renderer could not be created!", SDL_GetError());
@@ -84,6 +84,11 @@ void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
 {
     if (SDL_RenderCopy(r, t, src_r, dst_r) != 0)
         SDL_Error("Copy error!", SDL_GetError());
+}
+
+void draw_time(unsigned short time_passed)
+{
+    
 }
 
 /* Set the window size
