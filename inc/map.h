@@ -8,7 +8,6 @@
 #define MAX_TIMES (10000)
 
 #define has_mine(y, x, map) (map->arr[y][x] == MINE)
-#define has_exploded_mine(y, x, map) (map->arr[y][x] == EXPLODED_MINE)
 #define in_range(y, x, up, left, down, right) (y >= up && x >= left && y < down && x < right)
 #define in_map_range(y, x, map) in_range(y, x, 0, 0, map->col, map->row)
 #define is_empty(y, x, map) (map->arr[y][x] == EMPTY)
