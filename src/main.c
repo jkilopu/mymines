@@ -1,5 +1,4 @@
 #include "SDL.h"
-#include <unistd.h>
 #include "map.h"
 #include "game.h"
 #include "block.h"
@@ -32,20 +31,13 @@ int main(int argc, char *argv[])
                     switch(state)
                     {
                         case SDL_BUTTON(SDL_BUTTON_LEFT):
-                            if(click_map(map, (short) y, (short) x, &first_click))
+                            if (click_map(map, (short) y, (short) x, &first_click) || success())
                             {
-                                show_mines(map);
+                                finish(map);
                                 SDL_RenderPresent(main_renderer); // show mines
+                                SDL_Delay(5000);
+                                SDL_RenderClear(main_renderer);
                                 restart(&map);
-                                sleep(5);
-                                first_click = true;
-                            }
-                            if (success())
-                            {
-                                show_mines(map);
-                                SDL_RenderPresent(main_renderer); // show mines
-                                restart(&map);
-                                sleep(5);
                                 first_click = true;
                             }
                             break;

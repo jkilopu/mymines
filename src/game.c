@@ -6,6 +6,7 @@
 #include "block.h"
 #include "render.h"
 #include "menu.h"
+#include "timer.h"
 #include "fatal.h"
 
 static Settings settings;
@@ -21,6 +22,7 @@ void setup(void)
     get_settings(&settings);
     set_block_size(settings.block_size);
     set_main_window_size((int) settings.window_width, (int) settings.window_height);
+    set_timer_pos(settings.window_width, settings.window_height);
 }
 
 void start(Map *p_m) 
@@ -51,7 +53,7 @@ void show_mines(Map map)
         {
             if (has_flag(map->arr[i][j]))
                 unset_flag(map->arr[i][j]);
-            if (has_mine(i, j, map) && !has_exploded_mine(i, j, map))
+            if (has_mine(i, j, map))
                 draw_block(T_MINE, i, j);
         }
 }
@@ -73,6 +75,8 @@ bool click_map(Map map, short y, short x, bool *first_click)
             /* Recount(must after reput)*/
             map->arr[y][x] = cnt_mines(map, y, x);
         }
+        draw_timer();
+        set_timer();
     }
     if (is_shown(y, x, map))
         return open_with_flag(map, y, x);
@@ -144,6 +148,12 @@ bool open_with_flag(Map map, unsigned short y, unsigned short x)
 bool success(void)
 {
     return opened_blocks == settings.map_width * settings.map_height - settings.n_mine;
+}
+
+void finish(Map m)
+{
+    unset_timer();
+    show_mines(m);
 }
 
 void restart(Map *p_m)

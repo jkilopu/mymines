@@ -22,6 +22,7 @@ void set_draw_flag(Map map, unsigned short y, unsigned short x);
 bool open_with_flag(Map map, unsigned short y, unsigned short x);
 bool success(void);
 
+void finish(Map m);
 void restart(Map *p_m);
 void wrapup(Map *p_m);
 
