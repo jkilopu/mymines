@@ -7,6 +7,6 @@
 
 void get_settings(Settings *p_s);
 static void draw_menu(Digit ds[], Button bs[], int num);
-static void select(Digit ds[], Button bs[], int num);
+static void change_digits(Digit ds[], Button bs[], int num);
 
 #endif
