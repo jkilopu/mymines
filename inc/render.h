@@ -3,8 +3,7 @@
 
 #include "SDL.h"
 
-#define MAIN_WIN_WIDTH 600 // LATER: Dynamic size
-#define MAIN_WIN_HEIGHT 600
+#define MAIN_WIN_SIZE 600 // Fix intial size
 
 void init_sdl(void);
 

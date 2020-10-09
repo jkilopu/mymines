@@ -38,7 +38,7 @@ void get_settings(Settings *p_s)
     p_s->n_mine = digits[4].data * 10 + digits[5].data;
     if (!p_s->map_width || !p_s->map_height || !p_s->n_mine || p_s->n_mine >= p_s->map_width * p_s->map_height)
         Error("Invalid option!");
-    p_s->block_size = 600 / (p_s->map_width > p_s->map_height ? p_s->map_width : p_s->map_height);
+    p_s->block_size = MAIN_WIN_SIZE / (p_s->map_width > p_s->map_height ? p_s->map_width : p_s->map_height);
     p_s->window_height = p_s->map_height * p_s->block_size; 
     p_s->window_width = p_s->map_width * p_s->block_size + TIME_REGION_WIDTH;
 }
@@ -69,7 +69,7 @@ static void change_digits(Digit ds[], Button bs[], int num)
     while (!done)
     {
         if (!SDL_WaitEvent(&e))
-            SDL_FatalError("SDL event error!", SDL_GetError());
+            SDL_FatalError("SDL event error!\n%s\n", SDL_GetError());
         if (e.type == SDL_MOUSEBUTTONDOWN)
         {
             int y = 0, x = 0;
