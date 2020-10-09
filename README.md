@@ -24,9 +24,9 @@ Sweep all the mines(open all the blocks which can be opened) to win!
 ## Installation
 
 ``` bash
-git clone https://github.com/jkilopu/Linux-Programming.git
+git clone https://github.com/jkilopu/mymines.git 
 git submodule update --init
-cd ./Linux-Programming/mymine
+cd ./mymine
 mkdir build
 cd build
 cmake .. # You may need to specify a build system generator with "-G" option
