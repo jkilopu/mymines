@@ -1,4 +1,4 @@
-# mymine
+# mymines
 
 Imitaion of classic game "Mines" using SDL2 library, with timer and flag.
 
