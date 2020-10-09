@@ -13,7 +13,7 @@ extern SDL_Texture *block_texture[];
 void set_timer(void)
 {
     if(!(timer_id = SDL_AddTimer(INTERVAL, timer_callback, NULL)))
-        SDL_FatalError("Can't set timer!", SDL_GetError());
+        SDL_FatalError("Can't set timer!\n%s\n", SDL_GetError());
 }
 
 void unset_timer(void)

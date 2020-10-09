@@ -19,22 +19,22 @@ extern SDL_Texture *block_texture[TEXTURE_NUM];
 void init_sdl(void)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
-        SDL_FatalError("SDL could not initialize!", SDL_GetError());
+        SDL_FatalError("SDL could not initialize!\n%s\n", SDL_GetError());
     // Scale is needed, so try to make it better.
     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
-        SDL_Error("SDL set scale hint error!", SDL_GetError());
+        SDL_Error("SDL set scale hint error!\n%s\n", SDL_GetError());
     
-    main_window = SDL_CreateWindow("mymines", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAIN_WIN_WIDTH, MAIN_WIN_HEIGHT, SDL_WINDOW_SHOWN);
+    main_window = SDL_CreateWindow("mymines", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAIN_WIN_SIZE, MAIN_WIN_SIZE, SDL_WINDOW_SHOWN);
     if (main_window == NULL)
-        SDL_FatalError("Window could not be created!", SDL_GetError());
+        SDL_FatalError("Window could not be created!\n%s\n", SDL_GetError());
     main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED);
     if (main_renderer == NULL)
-        SDL_FatalError("Renderer could not be created!", SDL_GetError());
+        SDL_FatalError("Renderer could not be created!\n%s\n", SDL_GetError());
     SDL_SetRenderDrawColor( main_renderer, 0xFF, 0xFF, 0xFF, 0xFF );
     
     int img_flags = 0; // MAYBE: mutiple picture format
     if(!(IMG_Init(img_flags) == img_flags))
-        SDL_FatalError("SDL_image could not be initialized", IMG_GetError());
+        SDL_FatalError("SDL_image could not be initialized\n%s\n", IMG_GetError());
 }
 
 SDL_Texture *load_texture(const char *path)
@@ -43,16 +43,10 @@ SDL_Texture *load_texture(const char *path)
     SDL_Surface* loaded_surface = IMG_Load(path);
 
     if(loaded_surface == NULL)
-    {
-        fprintf(stderr, "Unable to load image %s!\n%s\n", path, IMG_GetError());
-        exit(1);
-    }
+        SDL_FatalError("Unable to load image %s!\n%s\n", path, IMG_GetError());
     new_texture = SDL_CreateTextureFromSurface(main_renderer, loaded_surface);
     if(new_texture == NULL)
-    {
-        fprintf(stderr, "Unable to create texture from %s!\n%s\n", path, SDL_GetError());
-        exit(1);
-    }
+        SDL_FatalError("Unable to create texture from %s!\n%s\n", path, SDL_GetError());
 
     SDL_FreeSurface(loaded_surface);
     return new_texture;
@@ -83,12 +77,7 @@ void load_media(void)
 void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
 {
     if (SDL_RenderCopy(r, t, src_r, dst_r) != 0)
-        SDL_Error("Copy error!", SDL_GetError());
-}
-
-void draw_time(unsigned short time_passed)
-{
-    
+        SDL_Error("Copy error!\n%s\n", SDL_GetError());
 }
 
 /* Set the window size
@@ -105,7 +94,7 @@ void set_main_window_size(int w, int h)
 
     main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED);
     if (main_renderer == NULL)
-        SDL_FatalError("Renderer could not be created!", SDL_GetError());
+        SDL_FatalError("Renderer could not be created!\n%s\n", SDL_GetError());
     SDL_SetRenderDrawColor( main_renderer, 0xFF, 0xFF, 0xFF, 0xFF );
     load_media();
 }

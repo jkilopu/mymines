@@ -6,7 +6,7 @@
 
 #define Error(str) FatalError(str)
 #define FatalError(str) fprintf(stderr, "%s\n", str), exit(1)
-#define SDL_FatalError(str, func) fprintf(stderr, "%s\n%s\n", str, func), exit(1)
-#define SDL_Error(str, func) SDL_FatalError(str, func)
+#define SDL_FatalError(...) fprintf(stderr, __VA_ARGS__), exit(1)
+#define SDL_Error(...) SDL_FatalError(__VA_ARGS__)
 
 #endif

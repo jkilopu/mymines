@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     while(!quit)
     {
         if (!SDL_WaitEvent(&event))
-            SDL_FatalError("SDL event error!", SDL_GetError());
+            SDL_FatalError("SDL event error!\n%s\n", SDL_GetError());
         switch(event.type)
         {
             case SDL_MOUSEBUTTONDOWN:
