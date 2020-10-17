@@ -65,6 +65,7 @@ jobs:
 
     - run: |
        git submodule update --init
+       sudo apt install libsdl2-dev libsdl2-image-dev
        mkdir build
        cd build
        while ! cmake .. ; do sleep 1; done
