@@ -23,7 +23,7 @@
 
 typedef struct _map{
     char **arr;
-    int col, row;
+    unsigned short col, row;
 } * Map;
 
 Map create_map(unsigned short col, unsigned short row);
