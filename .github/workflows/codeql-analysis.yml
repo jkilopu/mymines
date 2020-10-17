@@ -68,6 +68,8 @@ jobs:
        mkdir build
        cd build
        cmake ..
+       cmake ..
+       cmake ..
        make
        cd ..
 
