@@ -6,7 +6,7 @@ if (WIN32)
 endif()
 
 if (LINUX)
-    target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-rpath=./")
+    target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-rpath=./") # -Wl is used in gcc, pass the link flag after it
     message(STATUS ">>> Linux")
 endif()
 
