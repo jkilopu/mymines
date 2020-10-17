@@ -67,7 +67,7 @@ jobs:
        git submodule update --init
        mkdir build
        cd build
-       while ! cmake .. ; done;
+       while ! cmake .. ; do sleep 1; done
        make
        cd ..
 
