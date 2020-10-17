@@ -64,7 +64,9 @@ jobs:
     #    uses a compiled language
 
     - run: |
+       cd ..
        git submodule update --init
+       cd mysnake
        mkdir build
        cd build
        cmake ..
