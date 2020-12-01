@@ -17,7 +17,7 @@ Sweep all the mines(open all the blocks which can be opened) to win!
 ## Requirements
 
 * C/C++ compiler
-* SDL2 library
+* SDL2, SDL2_image
 * cmake
 * make
 
