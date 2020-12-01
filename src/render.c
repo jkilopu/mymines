@@ -12,7 +12,7 @@
 #include "block.h"
 #include "fatal.h"
 
-SDL_Window *main_window;
+static SDL_Window *main_window;
 SDL_Renderer *main_renderer;
 extern SDL_Texture *block_texture[TEXTURE_NUM];
 
