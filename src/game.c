@@ -25,11 +25,12 @@ void setup(void)
     set_timer_pos(settings.window_width, settings.window_height);
 }
 
-void start(Map *p_m) 
+Map start(void) 
 {
-    *p_m = create_map(settings.map_height, settings.map_width);
-    put_mines(*p_m, settings.n_mine);    
-    show_unknown((*p_m)->col, (*p_m)->row);
+    Map new_map = create_map(settings.map_height, settings.map_width);
+    put_mines(new_map, settings.n_mine);    
+    show_unknown(settings.map_height, settings.map_width);
+    return new_map;
 }
 
 void show_unknown(unsigned short col, unsigned short row)
@@ -51,8 +52,8 @@ void show_mines(Map map)
    for (int i = 0; i < map->col; i++)
         for (int j = 0; j < map->row; j++)
         {
-            if (has_flag(map->arr[i][j]))
-                unset_flag(map->arr[i][j]);
+            if (has_flag(i, j, map))
+                unset_flag(i, j, map);
             if (has_mine(i, j, map))
                 draw_block(T_MINE, i, j);
         }
@@ -61,7 +62,7 @@ void show_mines(Map map)
 /* Return true if click on a mine */
 bool click_map(Map map, short y, short x, bool *first_click)
 {
-    if (!in_map_range(y, x, map) || has_flag(map->arr[y][x]))
+    if (!in_map_range(y, x, map) || has_flag(y, x, map))
         return false;
     if (first_click != NULL && *first_click)
     {
@@ -72,8 +73,8 @@ bool click_map(Map map, short y, short x, bool *first_click)
             remove_mine(map, y, x);
             /* Reput */
             put_mines(map, 1);
-            /* Recount(must after reput)*/
-            map->arr[y][x] = cnt_mines(map, y, x);
+            /* Recount(must after reput) */
+            set_num(y, x, map, cnt_mines(map, y, x));
         }
         draw_timer();
         set_timer();
@@ -82,7 +83,7 @@ bool click_map(Map map, short y, short x, bool *first_click)
         return open_with_flag(map, y, x);
     if (has_mine(y, x, map))
     {
-        map->arr[y][x] = EXPLODED_MINE;
+        set_exploded_mine(y, x, map);
         draw_block(T_EXPLODED_MINE, y, x);
         return true;
     }
@@ -95,13 +96,13 @@ void show_block(Map map, short y, short x)
 {
     if (!in_map_range(y, x, map))
         return;
-    if (has_flag(map->arr[y][x])) // For block REACHED by "show_block" (not CLICKED)
-        unset_flag(map->arr[y][x]);
+    if (has_flag(y, x, map)) // For block REACHED by "show_block" (not CLICKED)
+        unset_flag(y, x, map);
     if (is_shown(y, x, map))
         return;
     opened_blocks++;
-    draw_block(map->arr[y][x], y, x);
-    map->arr[y][x] += '0'; // If it is a digit(e.g '2'), it is opened
+    draw_block(get_block(y, x, map), y, x);
+    open_block(y, x, map); // If it is a digit(e.g '2'), it is opened
     if (!is_empty(y, x, map))
         return;
     for (int i = 0; i < 8; i++)
@@ -116,14 +117,14 @@ void set_draw_flag(Map map, unsigned short y, unsigned short x)
 {
     if (!in_map_range(y, x, map) || is_shown(y, x, map))
         return;
-    if (has_flag(map->arr[y][x]))
+    if (has_flag(y, x, map))
     {
-        unset_flag(map->arr[y][x]);
+        unset_flag(y, x, map);
         draw_block(T_HIDDEN, y, x);
     }
     else
     {
-        set_flag(map->arr[y][x]);
+        set_flag(y, x, map);
         draw_block(T_FLAG, y, x);
     }
 }
@@ -150,23 +151,24 @@ bool success(void)
     return opened_blocks == settings.map_width * settings.map_height - settings.n_mine;
 }
 
-void finish(Map m)
+void finish(Map map)
 {
     unset_timer();
-    show_mines(m);
+    show_mines(map);
 }
 
-void restart(Map *p_m)
+void restart(Map map)
 {
-    destroy_map(p_m);
     opened_blocks = 0;
-    start(p_m);
+    clear_map(map);
+    put_mines(map, settings.n_mine);    
+    show_unknown(map->col, map->row);
 }
 
-void wrapup(Map *p_m)
+void wrapup(Map map)
 {
     delete_media();
     finish_sdl();
 
-    destroy_map(p_m);
+    destroy_map(map);
 }

@@ -12,7 +12,7 @@ typedef struct _settings {
 } Settings;
 
 void setup(void);
-void start(Map *p_m);
+Map start(void);
 
 void show_unknown(unsigned short col, unsigned short row);
 void show_mines(Map map);
@@ -22,8 +22,8 @@ void set_draw_flag(Map map, unsigned short y, unsigned short x);
 bool open_with_flag(Map map, unsigned short y, unsigned short x);
 bool success(void);
 
-void finish(Map m);
-void restart(Map *p_m);
-void wrapup(Map *p_m);
+void finish(Map map);
+void restart(Map map);
+void wrapup(Map map);
 
 #endif
