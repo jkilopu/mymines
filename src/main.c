@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 {
     setup();
     SDL_RenderClear(main_renderer);
-    start(&map);
+    map = start();
     SDL_RenderPresent(main_renderer);
 
     SDL_Event event;
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
                                 SDL_RenderPresent(main_renderer); // show mines
                                 SDL_Delay(5000);
                                 SDL_RenderClear(main_renderer);
-                                restart(&map);
+                                restart(map);
                                 first_click = true;
                             }
                             break;
@@ -60,6 +60,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    wrapup(&map);
+    wrapup(map);
     return 0;
 }
