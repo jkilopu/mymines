@@ -133,7 +133,7 @@ bool open_with_flag(Map map, unsigned short y, unsigned short x)
 {
     bool step_on_mine = false; // The final state
     bool once = false; // For each auto click
-    if (cnt_flags(map, y, x) != map->arr[y][x] - '0')
+    if (cnt_flags(map, y, x) != get_mine_num(y, x, map))
         return false;
     for (int i = 0; i < 8; i++)
     {
