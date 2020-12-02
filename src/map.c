@@ -1,3 +1,9 @@
+/**
+ * @file map.c
+ * @author jkilopu
+ * @brief Provides functions for the creation and manipulation of the 2d map and its blocks.
+ */
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -7,6 +13,10 @@
 #define FAILED_PLACEMENT_MAX_TIMES (10000)
 
 const short directions[8][2] = {{-1, -1}, {-1, 0}, {0, -1}, {1, 1}, {1, 0}, {0, 1}, {1, -1}, {-1, 1}};
+
+//-------------------------------------------------------------------
+// Functions
+//-------------------------------------------------------------------
 
 /**
  * @brief Create a empty square map with specified size.
@@ -56,7 +66,7 @@ void put_mines(Map map, unsigned short num)
                 Error("Tried too many times");
         } while(has_mine(y, x, map));
         
-        map->arr[y][x] = MINE;
+        set_mine(y, x, map);
         for (int i = 0; i < 8; i++)
         {
             short next_y = y + directions[i][0];

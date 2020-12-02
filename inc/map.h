@@ -1,3 +1,26 @@
+/**
+ * @file map.h
+ * @author jkilopu
+ * @brief Raw map in Mines, supports the creation and manupulation of the 2d map and its blocks, without drawer.
+ * 
+ * @details
+ * Map Coordinate System:
+ *       (0, 0)|-----------→ x axis [0, row)
+ *             |
+ *             |
+ *             |
+ *             |
+ *             ↓  y axis [0, col)
+ * 
+ * Map Blocks Value:
+ *      0 ~ 8        The value represents the number of mines around the closed block.
+ *      '0' ~ '8'    The value represents the number of mines around the opend block.
+ *      9            The mine.
+ * 
+ * Map Blocks Flag:
+ *      The flag bit is at 6th bit of the block. For details, see "Flag Manipulate Macros" below.
+ */
+
 #ifndef __MAP_H
 #define __MAP_H
 
@@ -6,7 +29,6 @@
 //-------------------------------------------------------------------
 #define MINE (9)
 #define EXPLODED_MINE (10)
-#define EMPTY ('0')
 
 //-------------------------------------------------------------------
 // Map Block Manipulate Macros
@@ -23,8 +45,9 @@
 #define has_mine(y, x, map) (map->arr[y][x] == MINE)
 #define in_range(y, x, up, left, down, right) (y >= up && x >= left && y < down && x < right)
 #define in_map_range(y, x, map) in_range(y, x, 0, 0, map->col, map->row)
-#define is_empty(y, x, map) (map->arr[y][x] == EMPTY)
+#define is_empty(y, x, map) (map->arr[y][x] == '0')
 #define is_shown(y, x, map) (map->arr[y][x] >= '0' && map->arr[y][x] <= '9')
+#define get_mine_num(y, x, map) (map->arr[y][x] - '0') ///< Should only used for opened blocks
 
 /**
  * @name The position of flag bit in map block
