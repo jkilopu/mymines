@@ -1,3 +1,8 @@
+/**
+ * @file menu.c
+ * @author jkilopu
+ * @brief The menu with buttons and options.
+ */
 #include "menu.h"
 #include "SDL.h"
 #include "render.h"
@@ -7,11 +12,20 @@
 #include "fatal.h"
 #include <stdbool.h>
 
-static SDL_Texture *menu;
-extern SDL_Texture *block_texture[];
+static SDL_Texture *menu; ///< The menu texture.
+extern SDL_Texture *block_textures[]; ///< Used as options and digits.
 extern SDL_Renderer *main_renderer;
 
-void get_settings(Settings *p_s)
+//-------------------------------------------------------------------
+// Functions
+//-------------------------------------------------------------------
+
+/**
+ * @brief Core functions which show the menu and get settings.
+ * 
+ * @param p_s The settings will get from the user.
+*/
+void show_menu_and_get_settings(Settings *p_s)
 {
     Digit digits[] = {
         {{400, 150, 60, 60}, 0},
@@ -31,7 +45,7 @@ void get_settings(Settings *p_s)
     };
     
     draw_menu(digits, buttons, 6);
-    change_digits(digits, buttons, 6);
+    menu_main(digits, buttons, 6);
     
     p_s->map_width = digits[0].data * 10 + digits[1].data;
     p_s->map_height = digits[2].data * 10 + digits[3].data;
@@ -43,6 +57,13 @@ void get_settings(Settings *p_s)
     p_s->window_width = p_s->map_width * p_s->block_size + TIME_REGION_WIDTH;
 }
 
+/**
+ * @brief Draw the menu with digits and buttons.
+ * 
+ * @param ds The digit blocks.
+ * @param bs The button blocks.
+ * @param num The number of ds and bs.
+ */
 static void draw_menu(Digit ds[], Button bs[], int num)
 {
     menu = load_texture("res/menu.gif");
@@ -50,11 +71,11 @@ static void draw_menu(Digit ds[], Button bs[], int num)
     
     for (int i = 0; i < num; i++)
     {
-        draw(main_renderer, block_texture[T_BACKGROUND], NULL, &ds[i].r);
+        draw(main_renderer, block_textures[T_BACKGROUND], NULL, &ds[i].r);
         SDL_Rect tmp_r = bs[i].r;
         tmp_r.y += bs[i].y_interval;
-        draw(main_renderer, block_texture[T_FLAG], NULL, &bs[i].r);
-        draw(main_renderer, block_texture[T_FLAG], NULL, &tmp_r);
+        draw(main_renderer, block_textures[T_FLAG], NULL, &bs[i].r);
+        draw(main_renderer, block_textures[T_FLAG], NULL, &tmp_r);
     }
     
     SDL_RenderPresent(main_renderer);
@@ -62,7 +83,14 @@ static void draw_menu(Digit ds[], Button bs[], int num)
     menu = NULL;
 }
 
-static void change_digits(Digit ds[], Button bs[], int num)
+/**
+ * @brief Wait for user input and draw the menu elements when user inputs arrive.
+ * 
+ * @param ds The digits will be changed.
+ * @param bs The buttons will be pressed.
+ * @param num The number of ds and bs.
+ */
+static void menu_main(Digit ds[], Button bs[], int num)
 {
     bool done = false;
     SDL_Event e;
@@ -98,7 +126,7 @@ static void change_digits(Digit ds[], Button bs[], int num)
             }
             if (selected != -1)
             {
-                draw(main_renderer, block_texture[ds[selected].data], NULL, &ds[selected].r);
+                draw(main_renderer, block_textures[ds[selected].data], NULL, &ds[selected].r);
                 SDL_RenderPresent(main_renderer);
             }
             else
