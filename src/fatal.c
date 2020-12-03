@@ -1,3 +1,8 @@
+/**
+ * @file fatal.c
+ * @author jkilopu
+ * @brief Provide wrapped error handle functions.
+ */
 #include "fatal.h"
 #include <stdlib.h>
 
