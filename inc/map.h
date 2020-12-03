@@ -1,9 +1,9 @@
 /**
  * @file map.h
  * @author jkilopu
- * @brief Raw map in Mines, supports the creation and manupulation of the 2d map and its blocks, without drawer.
+ * @brief Raw map which is independent with GUI, supports the creation and basic manupulation of the 2d map and its blocks.
  * 
- * @details
+ * @details About Map in mymines:
  * Map Coordinate System:
  *       (0, 0)|-----------→ x axis [0, row)
  *             |
@@ -27,12 +27,14 @@
 //-------------------------------------------------------------------
 // Map Block Type Macros
 //-------------------------------------------------------------------
+
 #define MINE (9)
 #define EXPLODED_MINE (10)
 
 //-------------------------------------------------------------------
 // Map Block Manipulate Macros
 //-------------------------------------------------------------------
+
 #define set_mine(y, x, map) map->arr[y][x] = MINE
 #define set_exploded_mine(y, x, map) map->arr[y][x] = EXPLODED_MINE
 #define open_block(y, x, map) map->arr[y][x] += '0'
@@ -42,6 +44,7 @@
 //-------------------------------------------------------------------
 // Map Block Status Macros
 //-------------------------------------------------------------------
+
 #define has_mine(y, x, map) (map->arr[y][x] == MINE)
 #define in_range(y, x, up, left, down, right) (y >= up && x >= left && y < down && x < right)
 #define in_map_range(y, x, map) in_range(y, x, 0, 0, map->col, map->row)
@@ -56,9 +59,11 @@
  *       so I set flag in sixth bit. (start from zero)
  */
 #define FLAG_BIT 6
+
 //-------------------------------------------------------------------
 // Flag Manipulate Macros
 //-------------------------------------------------------------------
+
 #define set_flag(y, x, map) ((map->arr[y][x]) |= (1 << FLAG_BIT))
 #define has_flag(y, x, map) ((map->arr[y][x]) & (1 << FLAG_BIT))
 #define unset_flag(y, x, map) ((map->arr[y][x]) &= ~(1 << FLAG_BIT))
@@ -66,8 +71,9 @@
 //-------------------------------------------------------------------
 // Type Definations
 //-------------------------------------------------------------------
+
 /**
- * @brief The struct used to record map status.
+ * @brief Used to record map status.
  */
 struct _map {
     char **arr;                 ///< The two dimension array.
@@ -78,6 +84,7 @@ typedef struct _map* Map;
 //-------------------------------------------------------------------
 // Prototypes
 //-------------------------------------------------------------------
+
 Map create_map(unsigned short col, unsigned short row);
 void put_mines(Map map, unsigned short num);
 void remove_mine(Map map, short y, short x);
