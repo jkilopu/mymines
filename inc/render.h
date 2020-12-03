@@ -1,9 +1,19 @@
+/**
+ * @file render.c
+ * @author jkilopu
+ * @brief Core module that can draw something on screen.
+ */
+
 #ifndef __RENDER_H
 #define __RENDER_H
 
 #include "SDL.h"
 
-#define MAIN_WIN_SIZE 600 // Fix intial size
+#define MAIN_WIN_SIZE 600 ///< Fix intial size
+
+//-------------------------------------------------------------------
+// Prototypes
+//-------------------------------------------------------------------
 
 void init_sdl(void);
 

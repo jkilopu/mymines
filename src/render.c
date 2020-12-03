@@ -1,5 +1,9 @@
-/*
- * note:
+/**
+ * @file fatal.h
+ * @author jkilopu
+ * @brief Provide functions to start and finish SDL and resources, wrapped functions to draw on window.
+ * 
+ * @note About SDL2 and mymines:
  * 1. SDL is actually quiet easy to use.(Despite a lot of setup and error detection)
  * 2. Still have questions in global variables and module building, is there a most confortable and efficient way?
  * 3. Some source file merely change.(Thanks to modularizition developing?)
@@ -12,15 +16,19 @@
 #include "block.h"
 #include "fatal.h"
 
-static SDL_Window *main_window;
 SDL_Renderer *main_renderer;
-extern SDL_Texture *block_texture[TEXTURE_NUM];
+static SDL_Window *main_window;
+extern const char *block_image_paths[BLOCK_TEXTURE_NUM];
+extern SDL_Texture *block_textures[BLOCK_TEXTURE_NUM];
 
+/**
+ * @brief Init SDL2 with necessary settings.
+ */
 void init_sdl(void)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
         SDL_FatalError("SDL could not initialize!\n%s\n", SDL_GetError());
-    // Scale is needed, so try to make it better.
+    /* Scale is needed, so try to make it better. */
     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
         SDL_Error("SDL set scale hint error!\n%s\n", SDL_GetError());
     
@@ -32,11 +40,18 @@ void init_sdl(void)
         SDL_FatalError("Renderer could not be created!\n%s\n", SDL_GetError());
     SDL_SetRenderDrawColor( main_renderer, 0xFF, 0xFF, 0xFF, 0xFF );
     
-    int img_flags = 0; // MAYBE: mutiple picture format
+    int img_flags = 0; ///< MAYBE: mutiple picture format
     if(!(IMG_Init(img_flags) == img_flags))
         SDL_FatalError("SDL_image could not be initialized\n%s\n", IMG_GetError());
 }
 
+/**
+ * @brief Load SDL_Texture from path.
+ * 
+ * @param path The path of the image.
+ * 
+ * @return The new SDL_Texture.
+ */
 SDL_Texture *load_texture(const char *path)
 {
     SDL_Texture* new_texture = NULL;
@@ -52,26 +67,13 @@ SDL_Texture *load_texture(const char *path)
     return new_texture;
 }
 
+/**
+ * @brief Load media required throwgh out the game.
+ */
 void load_media(void)
 {
-    char *b_paths[TEXTURE_NUM] = {
-        "res/Background.gif",
-        "res/one.gif",
-        "res/two.gif",
-        "res/three.gif",
-        "res/four.gif",
-        "res/five.gif",
-        "res/six.gif",
-        "res/seven.gif",
-        "res/eight.gif",
-        "res/mine.gif",
-        "res/explodedMine.gif",
-        "res/ask.gif",
-        "res/flag.gif",
-        "res/hidden.gif",
-    };
-    for (int i = 0; i < TEXTURE_NUM; i++)
-        block_texture[i] = load_texture(b_paths[i]);
+    for (int i = 0; i < BLOCK_TEXTURE_NUM; i++)
+        block_textures[i] = load_texture(block_image_paths[i]);
 }
 
 void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
@@ -80,7 +82,13 @@ void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
         SDL_Error("Copy error!\n%s\n", SDL_GetError());
 }
 
-/* Set the window size
+/**
+ * @brief Set the window size
+ * 
+ * @param w The window width.
+ * @param h The window height.
+ *
+ * @note Why destroy and reload the resoures:
  * The renderer is related to window,
  * and the texture is related to renderer.
  * So I have to delete and reload... That's painful.
@@ -99,15 +107,21 @@ void set_main_window_size(int w, int h)
     load_media();
 }
 
+/**
+ * @brief Delete media that is loaded by "load_media".
+ */
 void delete_media(void)
 {
-    for (int i = 0; i < TEXTURE_NUM; i++)
+    for (int i = 0; i < BLOCK_TEXTURE_NUM; i++)
     {
-        SDL_DestroyTexture(block_texture[i]);
-        block_texture[i] = NULL;
+        SDL_DestroyTexture(block_textures[i]);
+        block_textures[i] = NULL;
     }
 }
 
+/**
+ * @brief Fishish the SDL.
+ */
 void finish_sdl(void)
 {
     SDL_DestroyRenderer(main_renderer);
