@@ -1,17 +1,22 @@
+/**
+ * @file game.h
+ * @author jkilopu
+ * @brief The main routine of mymines.
+ */
 #include "SDL.h"
 #include "map.h"
 #include "game.h"
 #include "block.h"
 #include "fatal.h"
 
-static Map map;
+static Game game;
 extern SDL_Renderer *main_renderer;
 
 int main(int argc, char *argv[])
 {
-    setup();
+    game = setup();
     SDL_RenderClear(main_renderer);
-    map = start();
+    create_map_in_game(game);
     SDL_RenderPresent(main_renderer);
 
     SDL_Event event;
@@ -27,22 +32,22 @@ int main(int argc, char *argv[])
                 {
                     int y = 0, x = 0;
                     int state = SDL_GetMouseState(&x, &y);
-                    window2map((short *)&y, (short *)&x);
+                    window2map((unsigned short *)&y, (unsigned short *)&x);
                     switch(state)
                     {
                         case SDL_BUTTON(SDL_BUTTON_LEFT):
-                            if (click_map(map, (short) y, (short) x, &first_click) || success())
+                            if (click_map(game, (short) y, (short) x, &first_click) || success(game))
                             {
-                                finish(map);
-                                SDL_RenderPresent(main_renderer); // show mines
+                                finish(game);
+                                SDL_RenderPresent(main_renderer); ///< show mines
                                 SDL_Delay(5000);
                                 SDL_RenderClear(main_renderer);
-                                restart(map);
+                                restart(game);
                                 first_click = true;
                             }
                             break;
                         case SDL_BUTTON(SDL_BUTTON_RIGHT):
-                            set_draw_flag(map, (unsigned short)y, (unsigned short)x);
+                            set_draw_flag(game, (unsigned short)y, (unsigned short)x);
                             break;
                         default:
                             break;
@@ -60,6 +65,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    wrapup(map);
+    wrapup(game);
     return 0;
 }
