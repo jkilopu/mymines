@@ -1,3 +1,9 @@
+/**
+ * @file game.c
+ * @author jkilopu
+ * @brief Core logic and settings of game.
+ */
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
@@ -9,45 +15,93 @@
 #include "timer.h"
 #include "fatal.h"
 
-static Settings settings;
-static unsigned short opened_blocks;
 extern const short directions[8][2];
 
-void setup(void)
+//-------------------------------------------------------------------
+// Functions
+//-------------------------------------------------------------------
+
+/**
+ * @brief Create a game with settings.
+ * 
+ * @param p_settings The settings of the game.
+ * 
+ * @return The new game.
+ * 
+ * @note The map in game is not created in this function.
+ */
+static Game create_game(Settings *p_settings)
+{
+    Game new_game = malloc_fatal(sizeof(struct _game), "create_game - new_game");
+
+    new_game->settings.block_size = p_settings->block_size;
+    new_game->settings.map_height = p_settings->map_height;
+    new_game->settings.map_width = p_settings->map_width;
+    new_game->settings.n_mine = p_settings->n_mine;
+    new_game->settings.window_height = p_settings->window_height;
+    new_game->settings.window_width = p_settings->window_width;
+
+    new_game->opened_blocks = 0;
+
+    return new_game;
+}
+
+/**
+ * @brief Set up all things to start the game.
+ * 
+ * @return The new game.
+ */
+Game setup(void)
 {
     init_sdl();
     load_media();
     srand(time(NULL));
 
-    get_settings(&settings);
-    set_block_size(settings.block_size);
-    set_main_window_size((int) settings.window_width, (int) settings.window_height);
-    set_timer_pos(settings.window_width, settings.window_height);
+    Settings tmp_settings;
+    show_menu_and_get_settings(&tmp_settings);
+    Game game = create_game(&tmp_settings);
+    set_block_size(game->settings.block_size);
+    set_main_window_size((int) game->settings.window_width, (int) game->settings.window_height);
+    set_timer_pos(&game->timer, game->settings.window_width, game->settings.window_height);
+    return game;
 }
 
-Map start(void) 
+/**
+ * @brief Create the map in game.
+ * 
+ * @param game The game which is already set up.
+ * 
+ */
+void create_map_in_game(Game game)
 {
-    Map new_map = create_map(settings.map_height, settings.map_width);
-    put_mines(new_map, settings.n_mine);    
-    show_unknown(settings.map_height, settings.map_width);
-    return new_map;
+    game->map = create_map(game->settings.map_height, game->settings.map_width);
+    put_mines(game->map, game->settings.n_mine);    
+    show_unknown(game->map);
 }
 
-void show_unknown(unsigned short col, unsigned short row)
+/**
+ * @brief Show col*row unknown blocks.
+ * 
+ * @param map The map to show.
+ */
+static void show_unknown(Map map)
 { 
-   for (int i = 0; i < col; i++)
-        for (int j = 0; j < row; j++)
+   for (int i = 0; i < map->col; i++)
+        for (int j = 0; j < map->row; j++)
             draw_block(T_HIDDEN, i, j);
 }
 
-/* Show all the mines except the exploded one.
+/**
+ * @brief Show all the mines except the exploded one.
  * 
- * Since I didn't record the pos of all mines,
+ * @param map The col*row map.
+ * 
+ * @note Since I didn't record the pos of all mines,
  * (because its useless in other conditions)
  * I iterate the map to show all mines.
  * (though it may be inefficient)
  */
-void show_mines(Map map)
+static void show_mines(Map map)
 {
    for (int i = 0; i < map->col; i++)
         for (int j = 0; j < map->row; j++)
@@ -59,116 +113,184 @@ void show_mines(Map map)
         }
 }
 
-/* Return true if click on a mine */
-bool click_map(Map map, short y, short x, bool *first_click)
+/**
+ * @brief "Click" a block in the map, and dertermine if it is first click.
+ * 
+ * @param game The game contains map.
+ * @param y   The column number of clicked block.
+ * @param x   The row number of clicked mine.
+ * @param first_click If the click is first click.
+ *  
+ * @return Return true if click on a mine.
+ */
+bool click_map(Game game, short y, short x, bool *first_click)
 {
-    if (!in_map_range(y, x, map) || has_flag(y, x, map))
+    if (!in_map_range(y, x, game->map) || has_flag(y, x, game->map))
         return false;
     if (first_click != NULL && *first_click)
     {
         *first_click = false;
-        if (has_mine(y, x, map))
+        if (has_mine(y, x, game->map))
         {
             /* Remove the first clicked mine */
-            remove_mine(map, y, x);
+            remove_mine(game->map, y, x);
             /* Reput */
-            put_mines(map, 1);
+            put_mines(game->map, 1);
             /* Recount(must after reput) */
-            set_num(y, x, map, cnt_mines(map, y, x));
+            set_num(y, x, game->map, cnt_mines(game->map, y, x));
         }
-        draw_timer();
-        set_timer();
+        draw_timer(&game->timer);
+        set_timer(&game->timer);
     }
-    if (is_shown(y, x, map))
-        return open_with_flag(map, y, x);
-    if (has_mine(y, x, map))
+    if (is_shown(y, x, game->map))
+        return open_with_flag(game, y, x);
+    if (has_mine(y, x, game->map))
     {
-        set_exploded_mine(y, x, map);
+        set_exploded_mine(y, x, game->map);
         draw_block(T_EXPLODED_MINE, y, x);
         return true;
     }
     else
-        show_block(map, y, x);
+        show_blocks(game, y, x);
     return false;
 }
 
-void show_block(Map map, short y, short x)
+/**
+ * @brief Show blocks, follow the rules of Mines. 
+ * 
+ * @param game The game contains the map.
+ * @param y   The column of the selected block.
+ * @param x   The row of the selected block.
+ */
+static void show_blocks(Game game, short y, short x)
 {
-    if (!in_map_range(y, x, map))
+    if (!in_map_range(y, x, game->map))
         return;
-    if (has_flag(y, x, map)) // For block REACHED by "show_block" (not CLICKED)
-        unset_flag(y, x, map);
-    if (is_shown(y, x, map))
+    if (has_flag(y, x, game->map)) ///< For block REACHED by "show_blocks" (not CLICKED)
+        unset_flag(y, x, game->map);
+    if (is_shown(y, x, game->map))
         return;
-    opened_blocks++;
-    draw_block(get_block(y, x, map), y, x);
-    open_block(y, x, map); // If it is a digit(e.g '2'), it is opened
-    if (!is_empty(y, x, map))
+    game->opened_blocks++;
+    draw_block(get_block(y, x, game->map), y, x);
+    open_block(y, x, game->map); ///< If it is a digit(e.g '2'), it is opened
+    if (!is_empty(y, x, game->map))
         return;
     for (int i = 0; i < 8; i++)
     {
         short next_y = y + directions[i][0];
         short next_x = x + directions[i][1];
-        show_block(map, next_y, next_x);
+        show_blocks(game, next_y, next_x);
     }
 }
 
-void set_draw_flag(Map map, unsigned short y, unsigned short x)
+/**
+ * @brief Set and draw the flag at selected block in the map.
+ * 
+ * @param game The game contains the map.
+ * @param y   The column of the selected block.
+ * @param x   The row of the selected block.
+ */
+void set_draw_flag(Game game, unsigned short y, unsigned short x)
 {
-    if (!in_map_range(y, x, map) || is_shown(y, x, map))
+    if (!in_map_range(y, x, game->map) || is_shown(y, x, game->map))
         return;
-    if (has_flag(y, x, map))
+    if (has_flag(y, x, game->map))
     {
-        unset_flag(y, x, map);
+        unset_flag(y, x, game->map);
         draw_block(T_HIDDEN, y, x);
     }
     else
     {
-        set_flag(y, x, map);
+        set_flag(y, x, game->map);
         draw_block(T_FLAG, y, x);
     }
 }
 
-bool open_with_flag(Map map, unsigned short y, unsigned short x)
+/**
+ * @brief Open blocks (without flag) around the selected block.
+ * 
+ * @param game The game contains the map.
+ * @param y   The column of the selected block.
+ * @param x   The row of the selected block.
+ * 
+ * @return Return true if click on a mine.
+ * 
+ * @note The value of the block must be a digit.
+ */
+static bool open_with_flag(Game game, unsigned short y, unsigned short x)
 {
     bool step_on_mine = false; // The final state
     bool once = false; // For each auto click
-    if (cnt_flags(map, y, x) != get_mine_num(y, x, map))
+    if (cnt_flags(game->map, y, x) != get_mine_num(y, x, game->map))
         return false;
     for (int i = 0; i < 8; i++)
     {
         short next_y = y + directions[i][0];
         short next_x = x + directions[i][1];
-        if(in_map_range(next_y, next_x, map) && !is_shown(next_y, next_x, map)) // I just want to open surroundings(8 blocks)
-            once = click_map(map, next_y, next_x, NULL);
+        if(in_map_range(next_y, next_x, game->map) && !is_shown(next_y, next_x, game->map)) // I just want to open surroundings(8 blocks)
+            once = click_map(game, next_y, next_x, NULL);
         step_on_mine = (step_on_mine ? step_on_mine : once);
     }
     return step_on_mine;
 }
 
-bool success(void)
+/**
+ * @brief See if the player succeed.
+ * 
+ * @param game The game.
+ * 
+ * @return Return true if the player succeed.
+ */
+bool success(Game game)
 {
-    return opened_blocks == settings.map_width * settings.map_height - settings.n_mine;
+    return game->opened_blocks == game->settings.map_width * game->settings.map_height - game->settings.n_mine;
 }
 
-void finish(Map map)
+/**
+ * @brief Destroy a game.
+ * 
+ * @param game The game to destory.
+ */
+static void destroy_game(Game game)
 {
-    unset_timer();
-    show_mines(map);
+    destroy_map(game->map);
+    game->map = NULL;
+    free(game);
 }
 
-void restart(Map map)
+/**
+ * @brief Finish the game process.
+ * 
+ * @param game The game to finish.
+ */
+void finish(Game game)
 {
-    opened_blocks = 0;
-    clear_map(map);
-    put_mines(map, settings.n_mine);    
-    show_unknown(map->col, map->row);
+    unset_timer(&game->timer);
+    show_mines(game->map);
 }
 
-void wrapup(Map map)
+/**
+ * @brief Restart the game.
+ * 
+ * @param game The game contains the map to clear.
+ */
+void restart(Game game)
+{
+    game->opened_blocks = 0;
+    clear_map(game->map);
+    put_mines(game->map, game->settings.n_mine);    
+    show_unknown(game->map);
+}
+
+/**
+ * @brief Wrapup the game resource.
+ * 
+ * @param game The game to destroy.
+ */
+void wrapup(Game game)
 {
     delete_media();
     finish_sdl();
 
-    destroy_map(map);
+    destroy_game(game);
 }
