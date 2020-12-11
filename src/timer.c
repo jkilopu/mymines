@@ -5,6 +5,7 @@
 
 extern SDL_Renderer *main_renderer;
 extern SDL_Texture *block_textures[];
+extern FILE *output;
 
 //-------------------------------------------------------------------
 // Functions
@@ -18,7 +19,7 @@ extern SDL_Texture *block_textures[];
 void set_timer(Timer *p_timer)
 {
     if(!(p_timer->timer_id = SDL_AddTimer(INTERVAL, timer_callback, p_timer)))
-        SDL_FatalError("Can't set timer!\n%s\n", SDL_GetError());
+        SDL_output_fatal_error("Can't set timer!\n%s\n", SDL_GetError());
 }
 
 /**

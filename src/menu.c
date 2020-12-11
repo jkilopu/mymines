@@ -15,6 +15,7 @@
 static SDL_Texture *menu; ///< The menu texture.
 extern SDL_Texture *block_textures[]; ///< Used as options and digits.
 extern SDL_Renderer *main_renderer;
+extern FILE *output;
 
 //-------------------------------------------------------------------
 // Functions
@@ -97,7 +98,7 @@ static void menu_main(Digit ds[], Button bs[], int num)
     while (!done)
     {
         if (!SDL_WaitEvent(&e))
-            SDL_FatalError("SDL event error!\n%s\n", SDL_GetError());
+            SDL_output_fatal_error("SDL event error!\n%s\n", SDL_GetError());
         if (e.type == SDL_MOUSEBUTTONDOWN)
         {
             int y = 0, x = 0;

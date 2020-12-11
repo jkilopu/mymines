@@ -13,6 +13,7 @@
 #define FAILED_PLACEMENT_MAX_TIMES (10000)
 
 const short directions[8][2] = {{-1, -1}, {-1, 0}, {0, -1}, {1, 1}, {1, 0}, {0, 1}, {1, -1}, {-1, 1}};
+extern FILE *output;
 
 //-------------------------------------------------------------------
 // Functions
