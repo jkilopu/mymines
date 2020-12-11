@@ -11,9 +11,15 @@
 
 static Game game;
 extern SDL_Renderer *main_renderer;
+extern FILE *output;
 
 int main(int argc, char *argv[])
 {
+    if (argc == 2 && strcmp("--error-log", argv[1]) == 0)
+        set_fatal_output_stream(true);
+    else
+        set_fatal_output_stream(false);
+
     game = setup();
     SDL_RenderClear(main_renderer);
     create_map_in_game(game);
@@ -25,7 +31,7 @@ int main(int argc, char *argv[])
     while(!quit)
     {
         if (!SDL_WaitEvent(&event))
-            SDL_FatalError("SDL event error!\n%s\n", SDL_GetError());
+            SDL_output_fatal_error("SDL event error!\n%s\n", SDL_GetError());
         switch(event.type)
         {
             case SDL_MOUSEBUTTONDOWN:
@@ -66,5 +72,6 @@ int main(int argc, char *argv[])
     }
 
     wrapup(game);
+    close_fatal_output_stream();
     return 0;
 }
