@@ -1,5 +1,5 @@
 /**
- * @file render.c
+ * @file render.h
  * @author jkilopu
  * @brief Core module that can draw something on screen.
  */
