@@ -26,6 +26,7 @@ find_package(SDL2_image REQUIRED)
 message(STATUS "incDir: ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS}")
 
 # 添加子目录，使子目录中的CMakelists.txt被执行
+add_subdirectory(prng_lib)
 add_subdirectory(src)
 
 # Copy res to bin for Debug 
