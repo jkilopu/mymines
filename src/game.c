@@ -7,12 +7,14 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <stdint.h>
 #include "game.h"
 #include "map.h"
 #include "block.h"
 #include "render.h"
 #include "menu.h"
 #include "timer.h"
+#include "prng_alleged_rc4.h"
 #include "fatal.h"
 
 extern const short directions[8][2];
@@ -55,7 +57,7 @@ Game setup(void)
 {
     init_sdl();
     load_media();
-    srand(time(NULL));
+    prng_rc4_seed_time();
 
     Settings tmp_settings;
     show_menu_and_get_settings(&tmp_settings);

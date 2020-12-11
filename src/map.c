@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "map.h"
+#include "prng_alleged_rc4.h"
 #include "fatal.h"
 
 #define FAILED_PLACEMENT_MAX_TIMES (10000)
@@ -59,8 +60,8 @@ void put_mines(Map map, unsigned short num)
     {
         do
         {
-            y = rand() % map->col;
-            x = rand() % map->row;
+            y = (short) (prng_rc4_get_uint() % map->col);
+            x = (short) (prng_rc4_get_uint() % map->row);
             times++;
             if (times > FAILED_PLACEMENT_MAX_TIMES)
                 Error("Tried too many times");
