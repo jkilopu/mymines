@@ -165,7 +165,7 @@ void host_game(Uint16 port, SeedKeyPacket *p_seed_key_packet, Settings *p_settin
     const char *peer_name = SDLNet_ResolveIP(peer_addr);
     if (peer_name == NULL)
         SDL_net_error("Can't resovle peer addr!\n");
-    SDL_Log("Remode addr: %s\n", peer_addr);
+    SDL_Log("Remode addr: %s\n", peer_name);
 
     if (SDLNet_TCP_Send(connected_socket, p_seed_key_packet, sizeof(SeedKeyPacket)) != sizeof(SeedKeyPacket))
         SDL_net_error("Send seed_key_packet length not match!\n%s\n", SDL_GetError());
@@ -203,7 +203,7 @@ void join_game(const char *host, Uint16 port, SeedKeyPacket *p_seed_key_packet, 
     if (SDLNet_TCP_Recv(connected_socket, p_settings, sizeof(Settings)) != sizeof(Settings))
         SDL_net_error("Recv settings length not match!\n%s\n", SDL_GetError());
     
-    SDL_Log("key: %llu, key_size: %hhu", p_seed_key_packet->key, p_seed_key_packet->key_size);
+    SDL_Log("key: %lu, key_size: %hhu", p_seed_key_packet->key, p_seed_key_packet->key_size);
     
     socket_set = SDLNet_AllocSocketSet(1);
     SDLNet_TCP_AddSocket(socket_set, connected_socket);
