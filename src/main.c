@@ -4,74 +4,79 @@
  * @brief The main routine of mymines.
  */
 #include "SDL.h"
+#include "SDL_stdinc.h"
 #include "map.h"
 #include "game.h"
+#include "net.h"
 #include "block.h"
+#include "render.h"
 #include "fatal.h"
 
 static Game game;
 extern SDL_Renderer *main_renderer;
-extern FILE *output;
 
 int main(int argc, char *argv[])
 {
-    if (argc == 2 && strcmp("--error-log", argv[1]) == 0)
-        set_fatal_output_stream(true);
-    else
-        set_fatal_output_stream(false);
+    game = setup(argc);
 
-    game = setup();
     SDL_RenderClear(main_renderer);
     create_map_in_game(game);
     SDL_RenderPresent(main_renderer);
 
     SDL_Event event;
-    bool first_click = true;
-    bool quit = false;
+    SDL_bool first_click = SDL_TRUE;
+    SDL_bool quit = SDL_FALSE;
+
     while(!quit)
     {
-        if (!SDL_WaitEvent(&event))
-            SDL_output_fatal_error("SDL event error!\n%s\n", SDL_GetError());
-        switch(event.type)
+        while(SDL_PollEvent(&event))
         {
-            case SDL_MOUSEBUTTONDOWN:
-                {
-                    int y = 0, x = 0;
-                    int state = SDL_GetMouseState(&x, &y);
-                    window2map((unsigned short *)&y, (unsigned short *)&x);
+            int y, x;
+            int state;
+            switch(event.type)
+            {
+                case SDL_MOUSEBUTTONDOWN:
+                    state = SDL_GetMouseState(&x, &y);
+                    window2map((unsigned short *)&y, (unsigned short *)&x); ///< Not so dangerous pointer cast.
+                    break;
+                case SDL_MOUSEBUTTONUP: ///< Button up will return state 0.
                     switch(state)
                     {
                         case SDL_BUTTON(SDL_BUTTON_LEFT):
-                            if (click_map(game, (short) y, (short) x, &first_click) || success(game))
+                            if (is_lan_mode(game->settings.game_mode))
+                                send_click_map_packet(LEFT_CLICK, y, x);
+                            if (click_map(game, y, x, &first_click) || success(game))
                             {
                                 finish(game);
-                                SDL_RenderPresent(main_renderer); ///< show mines
-                                SDL_Delay(5000);
-                                SDL_RenderClear(main_renderer);
+                                game_over_menu();
                                 restart(game);
-                                first_click = true;
+                                first_click = SDL_TRUE;
                             }
                             break;
                         case SDL_BUTTON(SDL_BUTTON_RIGHT):
-                            set_draw_flag(game, (unsigned short)y, (unsigned short)x);
+                            if (is_lan_mode(game->settings.game_mode))
+                                send_click_map_packet(RIGHT_CLICK, y, x);
+                            set_draw_flag(game, y, x);
                             break;
                         default:
                             break;
                     }
                     SDL_RenderPresent(main_renderer);
-                }
-                break;
-            case SDL_MOUSEBUTTONUP: // up button will return state 0
-                break;
-            case SDL_QUIT:
-                quit = true;
-                break;
-            default:
-                break;
+                    break;
+                case SDL_QUIT:
+                    if (is_lan_mode(game->settings.game_mode))
+                        send_packet_type(TYPE_QUIT);
+                    quit = SDL_TRUE;
+                    break;
+                default:
+                    break;
+            }
         }
+        if (is_lan_mode(game->settings.game_mode))
+            if(handle_recved_packet(game, &first_click))
+                SDL_RenderPresent(main_renderer);
     }
 
     wrapup(game);
-    close_fatal_output_stream();
     return 0;
 }
