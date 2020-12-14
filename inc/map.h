@@ -46,8 +46,8 @@
 //-------------------------------------------------------------------
 
 #define has_mine(y, x, map) (map->arr[y][x] == MINE)
-#define in_range(y, x, up, left, down, right) (y >= up && x >= left && y < down && x < right)
-#define in_map_range(y, x, map) in_range(y, x, 0, 0, map->col, map->row)
+#define in_range(y, x, down, right) (y < down && x < right)
+#define in_map_range(y, x, map) in_range(y, x, map->col, map->row)
 #define is_empty(y, x, map) (map->arr[y][x] == '0')
 #define is_shown(y, x, map) (map->arr[y][x] >= '0' && map->arr[y][x] <= '9')
 #define get_mine_num(y, x, map) (map->arr[y][x] - '0') ///< Should only used for opened blocks
@@ -75,11 +75,10 @@
 /**
  * @brief Used to record map status.
  */
-struct _map {
+typedef struct _map {
     char **arr;                 ///< The two dimension array.
     unsigned short col, row;    ///< The column and row of the map.
-};
-typedef struct _map* Map;
+} *Map;
 
 //-------------------------------------------------------------------
 // Prototypes
@@ -87,9 +86,9 @@ typedef struct _map* Map;
 
 Map create_map(unsigned short col, unsigned short row);
 void put_mines(Map map, unsigned short num);
-void remove_mine(Map map, short y, short x);
-unsigned short cnt_mines(Map map, short y, short x);
-unsigned short cnt_flags(Map map, short y, short x);
+void remove_mine(Map map, unsigned short y, unsigned short x);
+unsigned short cnt_mines(Map map, unsigned short y, unsigned short x);
+unsigned short cnt_flags(Map map, unsigned short y, unsigned short x);
 void clear_map(Map map);
 void destroy_map(Map map);
 

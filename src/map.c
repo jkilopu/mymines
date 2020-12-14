@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include "map.h"
 #include "prng_alleged_rc4.h"
@@ -14,7 +13,6 @@
 #define FAILED_PLACEMENT_MAX_TIMES (10000)
 
 const short directions[8][2] = {{-1, -1}, {-1, 0}, {0, -1}, {1, 1}, {1, 0}, {0, 1}, {1, -1}, {-1, 1}};
-extern FILE *output;
 
 //-------------------------------------------------------------------
 // Functions
@@ -54,15 +52,15 @@ Map create_map(unsigned short col, unsigned short row)
  */
 void put_mines(Map map, unsigned short num)
 {
-    short y, x;
+    unsigned short y, x;
     int times = 0;
     
     while(num--)
     {
         do
         {
-            y = (short) (prng_rc4_get_uint() % map->col);
-            x = (short) (prng_rc4_get_uint() % map->row);
+            y = prng_rc4_get_uint() % map->col;
+            x = prng_rc4_get_uint() % map->row;
             times++;
             if (times > FAILED_PLACEMENT_MAX_TIMES)
                 Error("Tried too many times");
@@ -71,8 +69,8 @@ void put_mines(Map map, unsigned short num)
         set_mine(y, x, map);
         for (int i = 0; i < 8; i++)
         {
-            short next_y = y + directions[i][0];
-            short next_x = x + directions[i][1];
+            unsigned short next_y = y + directions[i][0];
+            unsigned short next_x = x + directions[i][1];
             if(in_map_range(next_y, next_x, map) && !has_mine(next_y, next_x, map))
                 map->arr[next_y][next_x]++;
         }
@@ -88,7 +86,7 @@ void put_mines(Map map, unsigned short num)
  * 
  * @note If there is no mine at (y, x), the program will exit.
  */
-void remove_mine(Map map, short y, short x)
+void remove_mine(Map map, unsigned short y, unsigned short x)
 {
     if (!has_mine(y, x, map))
     {
@@ -97,8 +95,8 @@ void remove_mine(Map map, short y, short x)
     }
     for (int i = 0; i < 8; i++)
     {
-        short next_y = y + directions[i][0];
-        short next_x = x + directions[i][1];
+        unsigned short next_y = y + directions[i][0];
+        unsigned short next_x = x + directions[i][1];
         if(in_map_range(next_y, next_x, map) && !has_mine(next_y, next_x, map))
             map->arr[next_y][next_x]--;
     }
@@ -111,13 +109,13 @@ void remove_mine(Map map, short y, short x)
  * @param y   The column number of the position.
  * @param x   The row number of the position.
  */
-unsigned short cnt_mines(Map map, short y, short x)
+unsigned short cnt_mines(Map map, unsigned short y, unsigned short x)
 {
     unsigned short cnt = 0;
     for (int i = 0; i < 8; i++)
     {
-            short next_y = y + directions[i][0];
-            short next_x = x + directions[i][1];
+            unsigned short next_y = y + directions[i][0];
+            unsigned short next_x = x + directions[i][1];
             if(in_map_range(next_y, next_x, map) && has_mine(next_y, next_x, map))
                 cnt++;
     }
@@ -131,13 +129,13 @@ unsigned short cnt_mines(Map map, short y, short x)
  * @param y   The column number of the position.
  * @param x   The row number of the position.
  */
-unsigned short cnt_flags(Map map, short y, short x)
+unsigned short cnt_flags(Map map, unsigned short y, unsigned short x)
 {
     unsigned short cnt = 0;
     for (int i = 0; i < 8; i++)
     {
-            short next_y = y + directions[i][0];
-            short next_x = x + directions[i][1];
+            unsigned short next_y = y + directions[i][0];
+            unsigned short next_x = x + directions[i][1];
             if(in_map_range(next_y, next_x, map) && has_flag(next_y, next_x, map))
                 cnt++;
     }
