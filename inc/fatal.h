@@ -7,7 +7,7 @@
 #ifndef __FATAL_H
 #define __FATAL_H
 
-#include "SDL_Log.h"
+#include "SDL_log.h"
 #include <stdio.h>
 #include <stdlib.h>
 
