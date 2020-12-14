@@ -20,7 +20,6 @@ SDL_Renderer *main_renderer;
 static SDL_Window *main_window;
 extern const char *block_image_paths[BLOCK_TEXTURE_NUM];
 extern SDL_Texture *block_textures[BLOCK_TEXTURE_NUM];
-extern FILE *output;
 
 /**
  * @brief Init SDL2 with necessary settings.
@@ -28,22 +27,22 @@ extern FILE *output;
 void init_sdl(void)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
-        SDL_output_fatal_error("SDL could not initialize!\n%s\n", SDL_GetError());
+        SDL_render_fatal_error("SDL could not initialize!\n%s\n", SDL_GetError());
     /* Scale is needed, so try to make it better. */
     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
-        SDL_output_error("SDL set scale hint error!\n%s\n", SDL_GetError());
+        SDL_render_fatal_error("SDL set scale hint error!\n%s\n", SDL_GetError());
     
     main_window = SDL_CreateWindow("mymines", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAIN_WIN_SIZE, MAIN_WIN_SIZE, SDL_WINDOW_SHOWN);
     if (main_window == NULL)
-        SDL_output_fatal_error("Window could not be created!\n%s\n", SDL_GetError());
+        SDL_render_fatal_error("Window could not be created!\n%s\n", SDL_GetError());
     main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED);
     if (main_renderer == NULL)
-        SDL_output_fatal_error("Renderer could not be created!\n%s\n", SDL_GetError());
+        SDL_render_fatal_error("Renderer could not be created!\n%s\n", SDL_GetError());
     SDL_SetRenderDrawColor( main_renderer, 0xFF, 0xFF, 0xFF, 0xFF );
     
     int img_flags = 0; ///< MAYBE: mutiple picture format
     if(!(IMG_Init(img_flags) == img_flags))
-        SDL_output_fatal_error("SDL_image could not be initialized\n%s\n", IMG_GetError());
+        SDL_render_fatal_error("SDL_image could not be initialized\n%s\n", IMG_GetError());
 }
 
 /**
@@ -59,10 +58,10 @@ SDL_Texture *load_texture(const char *path)
     SDL_Surface* loaded_surface = IMG_Load(path);
 
     if(loaded_surface == NULL)
-        SDL_output_fatal_error("Unable to load image %s!\n%s\n", path, IMG_GetError());
+        SDL_render_fatal_error("Unable to load image %s!\n%s\n", path, IMG_GetError());
     new_texture = SDL_CreateTextureFromSurface(main_renderer, loaded_surface);
     if(new_texture == NULL)
-        SDL_output_fatal_error("Unable to create texture from %s!\n%s\n", path, SDL_GetError());
+        SDL_render_fatal_error("Unable to create texture from %s!\n%s\n", path, SDL_GetError());
 
     SDL_FreeSurface(loaded_surface);
     return new_texture;
@@ -80,7 +79,7 @@ void load_media(void)
 void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
 {
     if (SDL_RenderCopy(r, t, src_r, dst_r) != 0)
-        SDL_output_error("Copy error!\n%s\n", SDL_GetError());
+        SDL_render_fatal_error("Copy error!\n%s\n", SDL_GetError());
 }
 
 /**
@@ -89,21 +88,21 @@ void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
  * @param w The window width.
  * @param h The window height.
  *
- * @note Why destroy and reload the resoures:
+ * @note Why destroy and reload resoures:
  * The renderer is related to window,
  * and the texture is related to renderer.
  * So I have to delete and reload... That's painful.
  */
-void set_main_window_size(int w, int h)
+void set_main_window_size(unsigned short w, unsigned short h)
 {
-    SDL_SetWindowSize(main_window, w, h);
+    SDL_SetWindowSize(main_window, (int) w, (int) h);
 
     SDL_DestroyRenderer(main_renderer);
     delete_media();
 
     main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED);
     if (main_renderer == NULL)
-        SDL_output_fatal_error("Renderer could not be created!\n%s\n", SDL_GetError());
+        SDL_render_fatal_error("Renderer could not be created!\n%s\n", SDL_GetError());
     SDL_SetRenderDrawColor( main_renderer, 0xFF, 0xFF, 0xFF, 0xFF );
     load_media();
 }
@@ -132,4 +131,11 @@ void finish_sdl(void)
 
     IMG_Quit();
     SDL_Quit();
+}
+
+void game_over_menu(void)
+{
+    SDL_RenderPresent(main_renderer); ///< show mines
+    SDL_Delay(5000);
+    SDL_RenderClear(main_renderer);
 }
