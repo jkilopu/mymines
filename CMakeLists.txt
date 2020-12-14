@@ -18,10 +18,12 @@ if(WIN32)
 # Windows must set these(Because libraries are not in a default path)
 set(SDL2_PATH "C:/Workspace/3rdLib/SDL2-2.0.12/x86_64-w64-mingw32")
 set(SDL2_IMAGE_PATH "C:/Workspace/3rdLib/SDL2_image-2.0.5/x86_64-w64-mingw32")
+set(SDL2_NET_PATH "C:/Workspace/3rdLib/SDL2_net-2.0.1/x86_64-w64-mingw32")
 endif()
 
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
+find_package(SDL2_net REQUIRED)
 
 message(STATUS "incDir: ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS}")
 
