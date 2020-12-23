@@ -5,11 +5,11 @@
  */
 #include "SDL.h"
 #include "SDL_stdinc.h"
-#include "map.h"
 #include "game.h"
-#include "net.h"
-#include "block.h"
+#include "map.h"
 #include "render.h"
+#include "block.h"
+#include "net.h"
 #include "fatal.h"
 
 static Game game;
@@ -24,48 +24,60 @@ int main(int argc, char *argv[])
     SDL_RenderPresent(main_renderer);
 
     SDL_Event event;
-    SDL_bool first_click = SDL_TRUE;
     SDL_bool quit = SDL_FALSE;
 
     while(!quit)
     {
-        while(SDL_PollEvent(&event))
+        if (SDL_PollEvent(&event))
         {
-            int y, x;
-            int state;
+            unsigned int y, x;
             switch(event.type)
             {
-                case SDL_MOUSEBUTTONDOWN:
-                    state = SDL_GetMouseState(&x, &y);
-                    window2map((unsigned short *)&y, (unsigned short *)&x); ///< Not so dangerous pointer cast.
-                    break;
                 case SDL_MOUSEBUTTONUP: ///< Button up will return state 0.
-                    switch(state)
+                    y = event.button.y;
+                    x = event.button.x;
+                    if (event.button.clicks == 1 && event.button.state == SDL_RELEASED)
                     {
-                        case SDL_BUTTON(SDL_BUTTON_LEFT):
-                            if (is_lan_mode(game->settings.game_mode))
-                                send_click_map_packet(LEFT_CLICK, y, x);
-                            if (click_map(game, y, x, &first_click) || success(game))
-                            {
-                                finish(game);
-                                game_over_menu();
-                                restart(game);
-                                first_click = SDL_TRUE;
-                            }
-                            break;
-                        case SDL_BUTTON(SDL_BUTTON_RIGHT):
-                            if (is_lan_mode(game->settings.game_mode))
-                                send_click_map_packet(RIGHT_CLICK, y, x);
-                            set_draw_flag(game, y, x);
-                            break;
-                        default:
-                            break;
+                        window2map(&y, &x); ///< Not so dangerous pointer cast.
+                        switch(event.button.button)
+                        {
+                            case SDL_BUTTON_LEFT:
+                                if (is_lan_mode(game->settings.game_mode))
+                                    send_click_map_packet(LEFT_CLICK, y, x);
+                                if (click_map(game, y, x) || success(game))
+                                {
+                                    finish(game);
+                                    restart(game);
+                                }
+                                break;
+                            case SDL_BUTTON_RIGHT:
+                                if (is_lan_mode(game->settings.game_mode))
+                                    send_click_map_packet(RIGHT_CLICK, y, x);
+                                set_draw_flag(game, y, x);
+                                break;
+                            default:
+                                break;
+                        }
+                        SDL_RenderPresent(main_renderer);
                     }
+                    break;
+                case SDL_MOUSEMOTION:
+                    y = event.motion.y;
+                    x = event.motion.x;
+                    if (is_lan_mode(game->settings.game_mode))
+                        send_mouse_move_packet(y, x);
+                    break;
+                case SDL_USEREVENT:
+                {
+                    unsigned int *p_time_passed = event.user.data1;
+                    (*p_time_passed)++;
+                    draw_timer(&game->timer);
                     SDL_RenderPresent(main_renderer);
                     break;
+                }
                 case SDL_QUIT:
                     if (is_lan_mode(game->settings.game_mode))
-                        send_packet_type(TYPE_QUIT);
+                        send_quit_packet();
                     quit = SDL_TRUE;
                     break;
                 default:
@@ -73,7 +85,7 @@ int main(int argc, char *argv[])
             }
         }
         if (is_lan_mode(game->settings.game_mode))
-            if(handle_recved_packet(game, &first_click))
+            if (handle_recved_packet(game))
                 SDL_RenderPresent(main_renderer);
     }
 
