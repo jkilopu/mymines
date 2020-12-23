@@ -54,18 +54,21 @@ static Game create_game_with_mode(Uint8 game_mode)
  * 
  * @return The new game.
  */
-Game setup(int argc)
+Game setup(int argc, char *argv[])
 {
     init_sdl();
     load_media();
 
     Uint8 game_mode = 0;
+    const char *ip = NULL;
     /** TODO: User choose the game mode */
     if (argc == 1)
         set_local_mode(game_mode);
     else
     {
         set_lan_mode(game_mode);
+        /** TODO: User input ip */
+        ip = argv[1];
         /** TODO: Graphic menu to choose client or server */
         if (argc == 2)
             set_client_mode(game_mode);
@@ -74,7 +77,7 @@ Game setup(int argc)
     }
 
     Game game = create_game_with_mode(game_mode);
-    connect_and_complete_setup(game);
+    connect_and_complete_setup(game, ip);
 
     set_block_size(game->settings.block_size);
     set_main_window_size(game->settings.window_width, game->settings.window_height);
@@ -87,7 +90,7 @@ Game setup(int argc)
  * 
  * @param game The game with game mode setup.
  */
-void connect_and_complete_setup(Game game)
+void connect_and_complete_setup(Game game, const char *ip)
 {
     if (!is_lan_mode(game->settings.game_mode))
     {
@@ -113,7 +116,7 @@ void connect_and_complete_setup(Game game)
     }
     else
     {
-        join_game("192.168.1.100", 7777, &key, &key_size, &game->settings);
+        join_game(ip, 7777, &key, &key_size, &game->settings);
         prng_rc4_seed_bytes(&key, key_size);
     }
 }

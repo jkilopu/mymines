@@ -56,9 +56,9 @@ typedef struct _game {
 // Prototypes
 //-------------------------------------------------------------------
 
-Game setup(int argc);
+Game setup(int argc, char *argv[]);
 static Game create_game_with_mode(Uint8 game_mode);
-void connect_and_complete_setup(Game game);
+void connect_and_complete_setup(Game game, const char *ip);
 void create_map_in_game(Game game);
 
 SDL_bool handle_recved_packet(Game game);

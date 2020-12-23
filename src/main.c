@@ -16,7 +16,7 @@ extern SDL_Renderer *main_renderer;
 
 int main(int argc, char *argv[])
 {
-    Game game = setup(argc);
+    Game game = setup(argc, argv);
 
     SDL_RenderClear(main_renderer);
     create_map_in_game(game);
