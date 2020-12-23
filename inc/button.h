@@ -42,7 +42,7 @@
 typedef struct _button
 {
     SDL_Rect r;
-    unsigned short y_interval; ///< The y interval between buttons.
+    unsigned int y_interval; ///< The y interval between buttons.
     Uint8 *p_data; ///< To change the data.
 } Button;
 
