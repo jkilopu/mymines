@@ -103,5 +103,4 @@ void draw_timer(Timer *p_timer)
     draw(main_renderer, block_textures[secs_hi], NULL, &dst_r);
     dst_r.y += block_size + block_size / 4;
     draw(main_renderer, block_textures[secs_lo], NULL, &dst_r);
-    SDL_RenderPresent(main_renderer);
 }
