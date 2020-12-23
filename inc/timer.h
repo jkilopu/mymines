@@ -1,3 +1,8 @@
+/**
+ * @file timer.h
+ * @author jkilopu
+ * @brief Stopwatch in mymines.
+ */
 #ifndef __TIMER_H
 #define __TIMER_H
 
@@ -15,9 +20,9 @@
  */
 typedef struct _timer {
     SDL_TimerID timer_id;
-    unsigned short time_passed; ///< Time in seconds
-    unsigned short time_block_x;
-    unsigned short time_block_y;
+    unsigned int time_passed; ///< Time in seconds
+    unsigned int time_block_x;
+    unsigned int time_block_y;
 } Timer;
 
 //-------------------------------------------------------------------
@@ -25,7 +30,7 @@ typedef struct _timer {
 //-------------------------------------------------------------------
 
 void set_timer(Timer *p_timer);
-void set_timer_pos(Timer *p_timer, unsigned short win_x, unsigned short win_y);
+void set_timer_pos(Timer *p_timer, unsigned int win_x, unsigned int win_y);
 void unset_timer(Timer *p_timer);
 void draw_timer(Timer *p_timer);
 Uint32 timer_callback(Uint32 interval, void *param);
