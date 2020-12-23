@@ -187,7 +187,7 @@ void host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings)
 
     SDLNet_TCP_Close(server_listen_socket);
 
-    /** TODO: Show the client ip */
+    /** TODO: Show the client ip on window */
     IPaddress *peer_addr = SDLNet_TCP_GetPeerAddress(connected_socket);
     if (peer_addr == NULL)
         SDL_net_error("Can't get peer addr!\n");
@@ -225,6 +225,15 @@ void join_game(const char *host, Uint32 port, Uint64 *p_key, Uint8 *p_key_size, 
      */
     while(!connected_socket)
         connected_socket = SDLNet_TCP_Open(&server_addr);
+
+    /** TODO: Show the server ip on window */
+    IPaddress *peer_addr = SDLNet_TCP_GetPeerAddress(connected_socket);
+    if (peer_addr == NULL)
+        SDL_net_error("Can't get peer addr!\n");
+    const char *peer_name = SDLNet_ResolveIP(peer_addr);
+    if (peer_name == NULL)
+        SDL_net_error("Can't resovle peer addr!\n");
+    SDL_Log("Remode addr: %s\n", peer_name);
 
     socket_set = SDLNet_AllocSocketSet(1);
     SDLNet_TCP_AddSocket(socket_set, connected_socket);
