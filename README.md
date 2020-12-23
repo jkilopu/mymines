@@ -39,3 +39,29 @@ cd ..
 ### Visual Studio 2019 with CMake
 
 ### Visual Studio Code with CMake
+
+
+## Play
+
+The mode of the game is set according to the number of args.
+In lan mode, you must specify IP address at the second argument.
+
+### Local mode
+There must be no arg.
+``` bash
+./mymines
+```
+
+### LAN mode
+
+#### Server mode
+Two args is needed.
+``` bash
+./mymines <whatever> <whaterver>
+```
+
+#### Clinet mode
+One arg is needed.
+``` bash
+./mymines <IP>
+```
