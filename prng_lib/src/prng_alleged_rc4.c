@@ -45,6 +45,7 @@
  * @note source:
  * https://benpfaff.org/writings/clc/prng.c
  */
+
 #include "prng_alleged_rc4.h"
 #include <assert.h>
 #include <float.h>
