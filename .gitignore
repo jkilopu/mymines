@@ -7,6 +7,10 @@ build/
 # vscode json
 .vscode/
 
+# visual studio
+.vs/
+out/
+
 #core
 core
 
