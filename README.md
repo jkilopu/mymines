@@ -25,12 +25,12 @@ Sweep all the mines(open all the blocks which can be opened) to win!
 
 ``` bash
 git clone https://github.com/jkilopu/mymines.git 
-cd ./mymine
+cd ./mymines
 git submodule update --init
 mkdir build
 cd build
 cmake .. # You may need to specify a build system generator with "-G" option
 make
 cd ..
-./build/bin/mymine
+./build/bin/mymines
 ```

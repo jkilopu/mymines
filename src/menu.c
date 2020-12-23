@@ -64,12 +64,12 @@ void show_menu_and_get_settings(Settings *p_s)
  * @param bs The button blocks.
  * @param num The number of ds and bs.
  */
-static void draw_menu(Digit ds[], Button bs[], unsigned short num)
+static void draw_menu(Digit ds[], Button bs[], unsigned int num)
 {
     menu = load_texture("res/menu.gif");
     draw(main_renderer, menu, NULL, NULL);
     
-    for (unsigned short i = 0; i < num; i++)
+    for (unsigned int i = 0; i < num; i++)
     {
         draw(main_renderer, block_textures[T_BACKGROUND], NULL, &ds[i].r);
         SDL_Rect tmp_r = bs[i].r;
@@ -90,7 +90,7 @@ static void draw_menu(Digit ds[], Button bs[], unsigned short num)
  * @param bs The buttons will be pressed.
  * @param num The number of ds and bs.
  */
-static void menu_main(Digit ds[], Button bs[], unsigned short num)
+static void menu_main(Digit ds[], Button bs[], unsigned int num)
 {
     SDL_bool done = SDL_FALSE;
     SDL_Event e;
@@ -98,15 +98,13 @@ static void menu_main(Digit ds[], Button bs[], unsigned short num)
     {
         if (!SDL_WaitEvent(&e))
             SDL_other_fatal_error("SDL event error!\n%s\n", SDL_GetError());
-        if (e.type == SDL_MOUSEBUTTONDOWN)
+        if (e.type == SDL_MOUSEBUTTONUP)
         {
-            int y = 0, x = 0;
-            int state = SDL_GetMouseState(&x, &y);
             int selected = -1;
-            if (state = SDL_BUTTON(SDL_BUTTON_LEFT))
+            if (e.button.state == SDL_RELEASED && e.button.button == SDL_BUTTON_LEFT)
             {
-                SDL_Point point = {x, y};
-                for (unsigned short i = 0; i < num; i++)
+                SDL_Point point = {e.button.x, e.button.y};
+                for (unsigned int i = 0; i < num; i++)
                 {
                     SDL_Rect tmp_r = bs[i].r;
                     tmp_r.y += bs[i].y_interval;
