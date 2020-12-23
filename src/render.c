@@ -140,13 +140,3 @@ void finish_sdl(void)
     IMG_Quit();
     SDL_Quit();
 }
-
-/**
- * @brief Show the gameover menu and wait for user input.
- */
-void game_over_menu(void)
-{
-    SDL_RenderPresent(main_renderer); ///< show mines
-    SDL_Delay(5000);
-    SDL_RenderClear(main_renderer);
-}

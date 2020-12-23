@@ -25,6 +25,4 @@ void delete_media(void);
 
 void finish_sdl(void);
 
-void game_over_menu(void);
-
 #endif

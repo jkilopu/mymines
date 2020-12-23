@@ -17,5 +17,6 @@
 void show_menu_and_get_settings(Settings *p_s);
 static void draw_menu(Digit ds[], Button bs[], unsigned int num);
 static void menu_main(Digit ds[], Button bs[], unsigned int num);
+void game_over_menu(void);
 
 #endif
