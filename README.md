@@ -16,21 +16,26 @@ Sweep all the mines(open all the blocks which can be opened) to win!
 
 ## Requirements
 
-* C/C++ compiler
-* SDL2, SDL2_image
+* C/C++ compiler(gcc, MSVC, mingw-gcc)
+* SDL2, SDL2_image, SDL2_net
 * cmake
 * make
 
 ## Installation
 
+### Command Line
 ``` bash
 git clone https://github.com/jkilopu/mymines.git 
-cd ./mymine
+cd ./mymines
 git submodule update --init
 mkdir build
 cd build
 cmake .. # You may need to specify a build system generator with "-G" option
 make
 cd ..
-./build/bin/mymine
+./build/bin/mymines
 ```
+
+### Visual Studio 2019 with CMake
+
+### Visual Studio Code with CMake
