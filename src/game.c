@@ -9,15 +9,25 @@
 #include "game.h"
 #include "map.h"
 #include "block.h"
-#include "render.h"
+#include "cursor.h"
 #include "menu.h"
+#include "render.h"
 #include "timer.h"
 #include "prng_alleged_rc4.h"
 #include "net.h"
 #include "SDL_stdinc.h"
 #include "fatal.h"
 
-extern const short directions[8][2];
+extern const int directions[8][2];
+
+#define get_block_type_without_mine(y, x, map) (has_flag(y, x, map) ? T_FLAG : \
+                                   is_shown_num(y, x, map) ? get_mine_num(y, x, map) : \
+                                   is_exploded_mine(y, x, map) ? T_EXPLODED_MINE : T_HIDDEN)
+
+#define get_block_type_all(y, x, map) (has_flag(y, x, map) ? T_FLAG : \
+                                   is_shown_num(y, x, map) ? get_mine_num(y, x, map) : \
+                                   has_mine(y, x, map) ? T_MINE : \
+                                   is_exploded_mine(y, x, map) ? T_EXPLODED_MINE : T_HIDDEN)
 
 //-------------------------------------------------------------------
 // Functions
@@ -32,7 +42,7 @@ extern const short directions[8][2];
  */
 static Game create_game_with_mode(Uint8 game_mode)
 {
-    Game new_game = malloc_fatal(sizeof(struct _game), "create_game - new_game");
+    Game new_game = calloc_fatal(1 ,sizeof(struct _game), "create_game - new_game");
 
     new_game->settings.game_mode = game_mode;
 
@@ -49,7 +59,7 @@ Game setup(int argc)
     init_sdl();
     load_media();
 
-    Uint8 game_mode;
+    Uint8 game_mode = 0;
     /** TODO: User choose the game mode */
     if (argc == 1)
         set_local_mode(game_mode);
@@ -72,6 +82,11 @@ Game setup(int argc)
     return game;
 }
 
+/**
+ * @brief Start local mode or lan mode, as server or client.
+ * 
+ * @param game The game with game mode setup.
+ */
 void connect_and_complete_setup(Game game)
 {
     if (!is_lan_mode(game->settings.game_mode))
@@ -84,21 +99,22 @@ void connect_and_complete_setup(Game game)
     if (SDLNet_Init() < -1)
         SDL_net_error("SDL_Net could not initialize!\n%s\n", SDL_GetError());
 
-    SeedKeyPacket seed_key_packet;
+    Uint64 key;
+    Uint8 key_size;
     if (is_server_mode(game->settings.game_mode))
     {
-        seed_key_packet.key = (Uint64) time(NULL);
-        seed_key_packet.key_size = (Uint8) sizeof(time_t);
-        prng_rc4_seed_bytes(&seed_key_packet.key, seed_key_packet.key_size);
+        key = time(NULL);
+        key_size = sizeof(time_t);
+        prng_rc4_seed_bytes(&key, key_size);
 
         show_menu_and_get_settings(&game->settings);
 
-        host_game(7777, &seed_key_packet, &game->settings);
+        host_game(7777, key, key_size, &game->settings);
     }
     else
     {
-        join_game("192.168.1.100", 7777, &seed_key_packet, &game->settings);
-        prng_rc4_seed_bytes(&seed_key_packet.key, seed_key_packet.key_size);
+        join_game("192.168.1.100", 7777, &key, &key_size, &game->settings);
+        prng_rc4_seed_bytes(&key, key_size);
     }
 }
 
@@ -106,51 +122,62 @@ void connect_and_complete_setup(Game game)
  * @brief Create the map in game.
  * 
  * @param game The game which is already set up.
- * 
  */
 void create_map_in_game(Game game)
 {
     game->map = create_map(game->settings.map_height, game->settings.map_width);
+    game->opened_blocks = 0;
+    game->is_first_click = SDL_TRUE;
+    show_whole_map(game->map);
     put_mines(game->map, game->settings.n_mine);    
-    show_unknown(game->map);
 }
 
 /**
- * @brief Receive packet from remote and 
+ * @brief Receive packet from remote and handle it normally according to its type.
  * 
  * @param game The running game.
- * @param first_click If the click is first click.
  * 
  * @return Return SDL_TRUE if the window need to update.
  */
-SDL_bool handle_recved_packet(Game game, SDL_bool *first_click)
+SDL_bool handle_recved_packet(Game game)
 {
-    PacketType packet_type = recv_packet_type();
-    switch (packet_type)
+    static unsigned int last_move_y, last_move_x;
+    if (!is_connected_socket_ready())
+        return SDL_FALSE;
+
+    MyMinesPacket mymines_packet;
+    recv_mymines_packet(&mymines_packet);
+    switch (mymines_packet.type)
     {
     case TYPE_NONE:
-        break;
-    case TYPE_MAP_POS:
+        Error("TYPE_NONE should not be here!\n");
+    case TYPE_CLICK_MAP:
     {
-        unsigned short y, x;
-        ClickType click_type = recv_click_map_packet(&y, &x);
-        switch (click_type)
+        unsigned int y = mymines_packet.click_map_packet.pos_y;
+        unsigned int x = mymines_packet.click_map_packet.pos_x;
+        switch (mymines_packet.click_map_packet.click_type)
         {
-        case LEFT_CLICK:
-            if (click_map(game, y, x, first_click) || success(game))
-            {
-                finish(game);
-                game_over_menu();
-                restart(game);
-                *first_click = SDL_TRUE;
-            }
-            break;
-        case RIGHT_CLICK:
-            set_draw_flag(game, y, x);
-            break;
-        default:
-            break;
+            case LEFT_CLICK:
+                if (click_map(game, y, x) || success(game))
+                {
+                    finish(game);
+                    restart(game);
+                }
+                break;
+            case RIGHT_CLICK:
+                set_draw_flag(game, y, x);
+                break;
+            default:
+                break;
         }
+        return SDL_TRUE;
+    }
+    case TYPE_MOUSE_MOVE:
+    {
+        show_block_in_cursor(game->map, last_move_y, last_move_x);
+        last_move_y = mymines_packet.mouse_move_packet.pos_y;
+        last_move_x = mymines_packet.mouse_move_packet.pos_x;
+        draw_remote_cursor(last_move_y, last_move_x);
         return SDL_TRUE;
     }
     case TYPE_QUIT:
@@ -165,38 +192,56 @@ SDL_bool handle_recved_packet(Game game, SDL_bool *first_click)
     return SDL_FALSE;
 }
 
-/**
- * @brief Show col*row unknown blocks.
- * 
- * @param map The map to show.
- */
-static void show_unknown(Map map)
-{ 
-   for (unsigned short i = 0; i < map->col; i++)
-        for (unsigned short j = 0; j < map->row; j++)
-            draw_block(T_HIDDEN, i, j);
+static void show_block_in_map_without_mine(Map map, unsigned int y, unsigned int x)
+{
+    BLOCK b = get_block_type_without_mine(y, x, map);
+    draw_block(b, y, x);
+}
+
+static void show_block_in_map_all(Map map, unsigned int y, unsigned int x)
+{
+    BLOCK b = get_block_type_all(y, x, map);
+    draw_block(b, y, x);
+}
+
+static void show_whole_map(Map map)
+{
+    for (unsigned int y = 0; y < map->col; y++)
+        for (unsigned int x = 0; x < map->row; x++)
+            show_block_in_map_all(map, y, x);
 }
 
 /**
- * @brief Show all the mines except the exploded one.
+ * @brief Show the block which is previously occupied by cursor.
  * 
- * @param map The col*row map.
- * 
- * @note Since I didn't record the pos of all mines,
- * (because its useless in other conditions)
- * I iterate the map to show all mines.
- * (though it may be inefficient)
+ * @param map The map.
+ * @param cursor_y The y coordinate in window.
+ * @param cursor_x The x coordinate in window.
  */
-static void show_mines(Map map)
+static void show_block_in_cursor(Map map, unsigned int cursor_y, unsigned int cursor_x)
 {
-   for (unsigned short i = 0; i < map->col; i++)
-        for (unsigned short j = 0; j < map->row; j++)
-        {
-            if (has_flag(i, j, map))
-                unset_flag(i, j, map);
-            if (has_mine(i, j, map))
-                draw_block(T_MINE, i, j);
-        }
+    unsigned int y = cursor_y, x = cursor_x;
+    window2map(&y, &x);
+    if (in_map_range(y, x, map))
+        show_block_in_map_without_mine(map, y, x);
+
+    y = cursor_y + CURSOR_HEIGHT;
+    x = cursor_x;
+    window2map(&y, &x);
+    if (in_map_range(y, x, map))
+        show_block_in_map_without_mine(map, y, x);
+
+    y = cursor_y;
+    x = cursor_x + CURSOR_WIDTH;
+    window2map(&y, &x);
+    if (in_map_range(y, x, map))
+        show_block_in_map_without_mine(map, y, x);
+
+    y = cursor_y + CURSOR_HEIGHT;
+    x = cursor_x + CURSOR_WIDTH;
+    window2map(&y, &x);
+    if (in_map_range(y, x, map))
+        show_block_in_map_without_mine(map, y, x);
 }
 
 /**
@@ -205,17 +250,16 @@ static void show_mines(Map map)
  * @param game The game contains map.
  * @param y   The column number of clicked block.
  * @param x   The row number of clicked mine.
- * @param first_click If the click is first click.
  *  
  * @return Return SDL_TRUE if click on a mine.
  */
-SDL_bool click_map(Game game, unsigned short y, unsigned short x, SDL_bool *first_click)
+SDL_bool click_map(Game game, unsigned int y, unsigned int x)
 {
     if (!in_map_range(y, x, game->map) || has_flag(y, x, game->map))
         return SDL_FALSE;
-    if (first_click != NULL && *first_click)
+    if (game->is_first_click)
     {
-        *first_click = SDL_FALSE;
+        game->is_first_click = SDL_FALSE;
         if (has_mine(y, x, game->map))
         {
             /* Remove the first clicked mine */
@@ -228,7 +272,7 @@ SDL_bool click_map(Game game, unsigned short y, unsigned short x, SDL_bool *firs
         set_timer(&game->timer);
         draw_timer(&game->timer);
     }
-    if (is_shown(y, x, game->map))
+    if (is_shown_num(y, x, game->map))
         return open_with_flag(game, y, x);
     if (has_mine(y, x, game->map))
     {
@@ -248,13 +292,13 @@ SDL_bool click_map(Game game, unsigned short y, unsigned short x, SDL_bool *firs
  * @param y   The column of the selected block.
  * @param x   The row of the selected block.
  */
-static void show_blocks(Game game, unsigned short y, unsigned short x)
+static void show_blocks(Game game, unsigned int y, unsigned int x)
 {
     if (!in_map_range(y, x, game->map))
         return;
     if (has_flag(y, x, game->map)) ///< For block REACHED by "show_blocks" (not CLICKED)
         unset_flag(y, x, game->map);
-    if (is_shown(y, x, game->map))
+    if (is_shown_num(y, x, game->map))
         return;
     game->opened_blocks++;
     draw_block(get_block(y, x, game->map), y, x);
@@ -263,8 +307,8 @@ static void show_blocks(Game game, unsigned short y, unsigned short x)
         return;
     for (int i = 0; i < 8; i++)
     {
-        unsigned short next_y = y + directions[i][0];
-        unsigned short next_x = x + directions[i][1];
+        unsigned int next_y = y + directions[i][0];
+        unsigned int next_x = x + directions[i][1];
         show_blocks(game, next_y, next_x);
     }
 }
@@ -276,9 +320,9 @@ static void show_blocks(Game game, unsigned short y, unsigned short x)
  * @param y   The column of the selected block.
  * @param x   The row of the selected block.
  */
-void set_draw_flag(Game game, unsigned short y, unsigned short x)
+void set_draw_flag(Game game, unsigned int y, unsigned int x)
 {
-    if (!in_map_range(y, x, game->map) || is_shown(y, x, game->map))
+    if (!in_map_range(y, x, game->map) || is_shown_num(y, x, game->map))
         return;
     if (has_flag(y, x, game->map))
     {
@@ -303,7 +347,7 @@ void set_draw_flag(Game game, unsigned short y, unsigned short x)
  * 
  * @note The value of the block must be a digit.
  */
-static SDL_bool open_with_flag(Game game, unsigned short y, unsigned short x)
+static SDL_bool open_with_flag(Game game, unsigned int y, unsigned int x)
 {
     SDL_bool step_on_mine = SDL_FALSE; // The final state
     SDL_bool once = SDL_FALSE; // For each auto click
@@ -311,10 +355,10 @@ static SDL_bool open_with_flag(Game game, unsigned short y, unsigned short x)
         return SDL_FALSE;
     for (int i = 0; i < 8; i++)
     {
-        unsigned short next_y = y + directions[i][0];
-        unsigned short next_x = x + directions[i][1];
-        if(in_map_range(next_y, next_x, game->map) && !is_shown(next_y, next_x, game->map)) // I just want to open surroundings(8 blocks)
-            once = click_map(game, next_y, next_x, NULL);
+        unsigned int next_y = y + directions[i][0];
+        unsigned int next_x = x + directions[i][1];
+        if(in_map_range(next_y, next_x, game->map) && !is_shown_num(next_y, next_x, game->map)) // I just want to open surroundings(8 blocks)
+            once = click_map(game, next_y, next_x);
         step_on_mine = (step_on_mine ? step_on_mine : once);
     }
     return step_on_mine;
@@ -352,7 +396,9 @@ static void destroy_game(Game game)
 void finish(Game game)
 {
     unset_timer(&game->timer);
-    show_mines(game->map);
+    unhidden_map(game->map);
+    show_whole_map(game->map);
+    game_over_menu();
 }
 
 /**
@@ -363,9 +409,10 @@ void finish(Game game)
 void restart(Game game)
 {
     game->opened_blocks = 0;
+    game->is_first_click = SDL_TRUE;
     clear_map(game->map);
+    show_whole_map(game->map);
     put_mines(game->map, game->settings.n_mine);    
-    show_unknown(game->map);
 }
 
 /**
