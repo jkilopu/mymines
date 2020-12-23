@@ -14,12 +14,14 @@
 #include "SDL_image.h"
 #include "render.h"
 #include "block.h"
+#include "cursor.h"
 #include "fatal.h"
 
 SDL_Renderer *main_renderer;
 static SDL_Window *main_window;
 extern const char *block_image_paths[BLOCK_TEXTURE_NUM];
 extern SDL_Texture *block_textures[BLOCK_TEXTURE_NUM];
+extern SDL_Texture *remote_cursor_texture;
 
 /**
  * @brief Init SDL2 with necessary settings.
@@ -35,7 +37,7 @@ void init_sdl(void)
     main_window = SDL_CreateWindow("mymines", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAIN_WIN_SIZE, MAIN_WIN_SIZE, SDL_WINDOW_SHOWN);
     if (main_window == NULL)
         SDL_render_fatal_error("Window could not be created!\n%s\n", SDL_GetError());
-    main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED);
+    main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
     if (main_renderer == NULL)
         SDL_render_fatal_error("Renderer could not be created!\n%s\n", SDL_GetError());
     SDL_SetRenderDrawColor( main_renderer, 0xFF, 0xFF, 0xFF, 0xFF );
@@ -74,8 +76,12 @@ void load_media(void)
 {
     for (int i = 0; i < BLOCK_TEXTURE_NUM; i++)
         block_textures[i] = load_texture(block_image_paths[i]);
+    remote_cursor_texture = load_texture(REMOTE_CURSOR_IMG_PATH);
 }
 
+/**
+ * @brief Wrapper function for "SDL_RenderCopy".
+ */
 void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
 {
     if (SDL_RenderCopy(r, t, src_r, dst_r) != 0)
@@ -93,7 +99,7 @@ void draw(SDL_Renderer *r, SDL_Texture *t,  SDL_Rect *src_r, SDL_Rect *dst_r)
  * and the texture is related to renderer.
  * So I have to delete and reload... That's painful.
  */
-void set_main_window_size(unsigned short w, unsigned short h)
+void set_main_window_size(unsigned int w, unsigned int h)
 {
     SDL_SetWindowSize(main_window, (int) w, (int) h);
 
@@ -117,6 +123,8 @@ void delete_media(void)
         SDL_DestroyTexture(block_textures[i]);
         block_textures[i] = NULL;
     }
+    SDL_DestroyTexture(remote_cursor_texture);
+    remote_cursor_texture = NULL;
 }
 
 /**
@@ -133,6 +141,9 @@ void finish_sdl(void)
     SDL_Quit();
 }
 
+/**
+ * @brief Show the gameover menu and wait for user input.
+ */
 void game_over_menu(void)
 {
     SDL_RenderPresent(main_renderer); ///< show mines
