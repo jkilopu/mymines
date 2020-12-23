@@ -19,11 +19,11 @@ enum {
 // Error Handle Macros
 //-------------------------------------------------------------------
 
-#define Error(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__), exit(1)
+#define Error(...) SDL_Log(__VA_ARGS__), exit(1)
 #define FatalError(...) Error(__VA_ARGS__)
 #define SDL_other_fatal_error(...) Error(__VA_ARGS__)
-#define SDL_net_error(...) SDL_LogError(SDL_LOG_CATEGORY_NET, __VA_ARGS__), exit(1)
-#define SDL_render_fatal_error(...) SDL_LogError(SDL_LOG_CATEGORY_RENDER, __VA_ARGS__), exit(1)
+#define SDL_net_error(...) SDL_Log(__VA_ARGS__), exit(1)
+#define SDL_render_fatal_error(...) SDL_Log(__VA_ARGS__), exit(1)
 
 //-------------------------------------------------------------------
 // Error Message Macros
