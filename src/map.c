@@ -12,7 +12,7 @@
 
 #define FAILED_PLACEMENT_MAX_TIMES (10000)
 
-const int directions[8][2] = {{-1, -1}, {-1, 0}, {0, -1}, {1, 1}, {1, 0}, {0, 1}, {1, -1}, {-1, 1}};
+const short directions[8][2] = {{-1, -1}, {-1, 0}, {0, -1}, {1, 1}, {1, 0}, {0, 1}, {1, -1}, {-1, 1}};
 
 //-------------------------------------------------------------------
 // Functions
@@ -28,13 +28,13 @@ const int directions[8][2] = {{-1, -1}, {-1, 0}, {0, -1}, {1, 1}, {1, 0}, {0, 1}
  * 
  * @warning The param col and row can't be zero.
  */
-Map create_map(unsigned int col, unsigned int row)
+Map create_map(unsigned short col, unsigned short row)
 {
     Map new_map = NULL;
     
     new_map = malloc_fatal(sizeof(struct _map), "create_map - new_map");
     new_map->arr = malloc_fatal(col * sizeof(char *), "create_map - new_map->arr");
-    for (unsigned int i = 0; i < col; i++)
+    for (unsigned short i = 0; i < col; i++)
         new_map->arr[i] = calloc_fatal(row, sizeof(char), "create_map - new_map->arr[i]");
     
     new_map->col = col;
@@ -50,9 +50,9 @@ Map create_map(unsigned int col, unsigned int row)
  * 
  * @warning If tried to place mines too many times, the program will exit.
  */
-void put_mines(Map map, unsigned int num)
+void put_mines(Map map, unsigned short num)
 {
-    unsigned int y, x;
+    unsigned short y, x;
     int times = 0;
     
     while(num--)
@@ -69,8 +69,8 @@ void put_mines(Map map, unsigned int num)
         set_mine(y, x, map);
         for (int i = 0; i < 8; i++)
         {
-            unsigned int next_y = y + directions[i][0];
-            unsigned int next_x = x + directions[i][1];
+            unsigned short next_y = y + directions[i][0];
+            unsigned short next_x = x + directions[i][1];
             if(in_map_range(next_y, next_x, map) && !has_mine(next_y, next_x, map))
                 map->arr[next_y][next_x]++;
         }
@@ -86,7 +86,7 @@ void put_mines(Map map, unsigned int num)
  * 
  * @note If there is no mine at (y, x), the program will exit.
  */
-void remove_mine(Map map, unsigned int y, unsigned int x)
+void remove_mine(Map map, unsigned short y, unsigned short x)
 {
     if (!has_mine(y, x, map))
     {
@@ -95,8 +95,8 @@ void remove_mine(Map map, unsigned int y, unsigned int x)
     }
     for (int i = 0; i < 8; i++)
     {
-        unsigned int next_y = y + directions[i][0];
-        unsigned int next_x = x + directions[i][1];
+        unsigned short next_y = y + directions[i][0];
+        unsigned short next_x = x + directions[i][1];
         if(in_map_range(next_y, next_x, map) && !has_mine(next_y, next_x, map))
             map->arr[next_y][next_x]--;
     }
@@ -109,13 +109,13 @@ void remove_mine(Map map, unsigned int y, unsigned int x)
  * @param y   The column number of the position.
  * @param x   The row number of the position.
  */
-unsigned int cnt_mines(Map map, unsigned int y, unsigned int x)
+unsigned short cnt_mines(Map map, unsigned short y, unsigned short x)
 {
-    unsigned int cnt = 0;
+    unsigned short cnt = 0;
     for (int i = 0; i < 8; i++)
     {
-            unsigned int next_y = y + directions[i][0];
-            unsigned int next_x = x + directions[i][1];
+            unsigned short next_y = y + directions[i][0];
+            unsigned short next_x = x + directions[i][1];
             if(in_map_range(next_y, next_x, map) && has_mine(next_y, next_x, map))
                 cnt++;
     }
@@ -129,35 +129,24 @@ unsigned int cnt_mines(Map map, unsigned int y, unsigned int x)
  * @param y   The column number of the position.
  * @param x   The row number of the position.
  */
-unsigned int cnt_flags(Map map, unsigned int y, unsigned int x)
+unsigned short cnt_flags(Map map, unsigned short y, unsigned short x)
 {
-    unsigned int cnt = 0;
+    unsigned short cnt = 0;
     for (int i = 0; i < 8; i++)
     {
-            unsigned int next_y = y + directions[i][0];
-            unsigned int next_x = x + directions[i][1];
+            unsigned short next_y = y + directions[i][0];
+            unsigned short next_x = x + directions[i][1];
             if(in_map_range(next_y, next_x, map) && has_flag(next_y, next_x, map))
                 cnt++;
     }
     return cnt;
 }
 
-void unhidden_map(Map map)
-{
-    for (unsigned int y = 0; y < map->col; y++)
-        for (unsigned int x = 0; x < map->row; x++)
-        {
-            if (has_flag(y, x, map))
-                unset_flag(y, x, map);
-            if (is_num(y, x, map))
-                open_block(y, x, map);
-        }
-}
-
 /**
  * @brief Clear the map.
  * 
  * @param map The map to clear.
+ * 
  */
 void clear_map(Map map)
 {
@@ -172,7 +161,7 @@ void clear_map(Map map)
  */
 void destroy_map(Map map)
 {
-    for (unsigned int i = 0; i < map->col; i++)
+    for (unsigned short i = 0; i < map->col; i++)
     {
         free(map->arr[i]);
         map->arr[i] = NULL;
