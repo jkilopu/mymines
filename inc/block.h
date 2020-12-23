@@ -32,9 +32,8 @@ typedef enum _block
 // Prototypes
 //-------------------------------------------------------------------
 
-void set_block_size(unsigned short bs);
-void draw_block(BLOCK b, unsigned short y, unsigned short x);
-static void draw_block_helper(SDL_Renderer *r, SDL_Texture *t, unsigned short y, unsigned short x);
-void window2map(unsigned short *p_y, unsigned short *p_x);
+void set_block_size(unsigned int bs);
+void draw_block(BLOCK b, unsigned int y, unsigned int x);
+void window2map(unsigned int *p_y, unsigned int *p_x);
 
 #endif

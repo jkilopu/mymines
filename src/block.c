@@ -25,7 +25,7 @@ const char *block_image_paths[BLOCK_TEXTURE_NUM] = {
     "res/hidden.gif",
 };
 SDL_Texture *block_textures[BLOCK_TEXTURE_NUM];
-static unsigned short block_size;
+static unsigned int block_size;
 extern SDL_Renderer *main_renderer;
 
 /**
@@ -35,7 +35,7 @@ extern SDL_Renderer *main_renderer;
  * 
  * @note The functions must be called before any other functions in the block module.
 */
-void set_block_size(unsigned short bs)
+void set_block_size(unsigned int bs)
 {
     block_size = bs;
 }
@@ -47,20 +47,7 @@ void set_block_size(unsigned short bs)
  * @param y The yth block pos on y axis.
  * @param x The xth block pos on x axis.
 */
-void draw_block(BLOCK b, unsigned short y, unsigned short x)
-{
-    draw_block_helper(main_renderer, block_textures[b], y, x);
-}
-
-/**
- * @brief The helper function of "draw_block".
- * 
- * @param r The renderer.
- * @param t The texture to draw.
- * @param y The yth block pos on y axis.
- * @param x The xth block pos on x axis.
- */
-static void draw_block_helper(SDL_Renderer *r, SDL_Texture *t, unsigned short y, unsigned short x)
+void draw_block(BLOCK b, unsigned int y, unsigned int x)
 {
     SDL_Rect dst_r = {
         x * block_size,
@@ -68,7 +55,7 @@ static void draw_block_helper(SDL_Renderer *r, SDL_Texture *t, unsigned short y,
         block_size,
         block_size,
     };
-    draw(r, t, NULL, &dst_r);
+    draw(main_renderer, block_textures[b], NULL, &dst_r);
 }
 
 /**
@@ -77,7 +64,7 @@ static void draw_block_helper(SDL_Renderer *r, SDL_Texture *t, unsigned short y,
  * @param p_y The pointer to window pos on y axis.
  * @param p_x The pointer to window pos on x axis.
  */
-void window2map(unsigned short *p_y, unsigned short *p_x)
+void window2map(unsigned int *p_y, unsigned int *p_x)
 {
     *p_y = *p_y / block_size;
     *p_x = *p_x / block_size;
