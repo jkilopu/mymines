@@ -1,8 +1,16 @@
+/**
+ * @file net.c
+ * @author jkilopu
+ * @brief Provides functions for connection and packet manipulation.
+ */
 #include "net.h"
 #include "SDL_net.h"
 #include "game.h"
 #include "SDL_stdinc.h"
 #include "fatal.h"
+#include "SDL_log.h"
+#include <stdarg.h>
+#include <string.h>
 
 static TCPsocket connected_socket;
 static SDLNet_SocketSet socket_set;
@@ -17,13 +25,10 @@ static SDLNet_SocketSet socket_set;
  * @param p_addr Points to the IPaddress that will be filled in.
  * @param port The port to listen on.
  */
-static void server_resolve_host(IPaddress *p_addr, Uint16 port)
+static void server_resolve_host(IPaddress *p_addr, Uint32 port)
 {
     if (SDLNet_ResolveHost(p_addr, NULL, port) < 0)
-    {
-        SDL_net_error("Can't resolve server host!\n%s\n", SDL_GetError());
-        exit(1);
-    }    
+        SDL_net_error("Can't resolve server host: port: %hu!\n%s\n", port, SDL_GetError());
 }
 
 /**
@@ -33,13 +38,10 @@ static void server_resolve_host(IPaddress *p_addr, Uint16 port)
  * @param host A hostname or IP to connect with the server.
  * @param port The server's listening port number.
  */
-static void clinent_resolve_host(IPaddress *p_addr, const char *host, Uint16 port)
+static void clinent_resolve_host(IPaddress *p_addr, const char *host, Uint32 port)
 {
     if (SDLNet_ResolveHost(p_addr, host, port) < 0)
-    {
-        SDL_net_error("Can't resolve client host!\n%s\n", SDL_GetError());
-        exit(1);
-    }    
+        SDL_net_error("Can't resolve client host: %s:%hu!\n%s\n", host, port,SDL_GetError());
 }
 
 /**
@@ -47,7 +49,7 @@ static void clinent_resolve_host(IPaddress *p_addr, const char *host, Uint16 por
  * 
  * @return Return SDL_TRUE if the "connected_socket" has the data ready.
  */
-static SDL_bool is_connected_socket_ready(void)
+SDL_bool is_connected_socket_ready(void)
 {
     int ready_socket_num = SDLNet_CheckSockets(socket_set, 0);
     ///< Since "connected_socket" is the only socket in "socket_set", no need to call "SDLNet_SocketReady".
@@ -59,89 +61,116 @@ static SDL_bool is_connected_socket_ready(void)
     return SDL_TRUE;
 }
 
-/**
- * @brief Send a packet type packet to "connected_socket".
- * 
- * @param packet_type The type of the packet, see the header file for details.
- * 
- * @note When to use "send_packet_type":
- * After sending the settings packet and key packet, during the playing process,
- * when there is a need for interaction (Mouse move, click, game end),
- * this function must be called so that if there is a packet follow it,
- * the remote knows how to handle the next packet.
- */
-void send_packet_type(PacketType packet_type)
+//-------------------------------------------------------------------
+// Fill packet
+//-------------------------------------------------------------------
+
+static void fill_seed_key_packet(SeedKeyPacket *p_seed_key_packet, Uint64 key, Uint8 key_size)
 {
-    if (SDLNet_TCP_Send(connected_socket, &packet_type, sizeof(PacketType)) != sizeof(PacketType))
-        SDL_net_error("Send packet type not match!\n%s\n", SDL_GetError());
+    p_seed_key_packet->type = TYPE_SEED_KEY;
+    p_seed_key_packet->key = key;
+    p_seed_key_packet->key_size = key_size;
 }
 
-/**
- * @brief Receive a pakcet type packet from "connected_socket".
- * 
- * @return Packet type received
- */
-PacketType recv_packet_type(void)
+static void fill_settings_packet(SettingsPacket *p_settings_packet, Settings *p_settings)
 {
-    PacketType packet_type = TYPE_NONE;
-    if (is_connected_socket_ready())
-        if (SDLNet_TCP_Recv(connected_socket, &packet_type, sizeof(PacketType)) != sizeof(PacketType))
-            SDL_net_error("Recv packet_type failed!\n%s\n", SDL_GetError());
-    return packet_type;
+    p_settings_packet->type = TYPE_SETTINGS;
+    p_settings_packet->settings.block_size = p_settings->block_size;
+    p_settings_packet->settings.game_mode = p_settings->game_mode;
+    p_settings_packet->settings.map_height = p_settings->map_height;
+    p_settings_packet->settings.map_width = p_settings->map_width;
+    p_settings_packet->settings.window_height = p_settings->window_height;
+    p_settings_packet->settings.window_width = p_settings->window_width;
+    p_settings_packet->settings.n_mine = p_settings->n_mine;
 }
 
-/**
- * @brief Send a click map packet.
- * 
- * @param click_type The click type, see header file for details.
- * @param y   The column number of the click.
- * @param x   The row number of the click.
- */
-void send_click_map_packet(ClickType click_type, unsigned short y, unsigned short x)
+static void fill_click_map_packet(ClickMapPacket *p_click_map_packet,
+        ClickType click_type, unsigned int y, unsigned int x)
 {
-    send_packet_type(TYPE_MAP_POS);
-
-    ClickMapPacket click_map_packet;
-    click_map_packet.click_type = click_type;
-    click_map_packet.position_packet.pos_y = (Uint16) y;
-    click_map_packet.position_packet.pos_x = (Uint16) x;
-    if (SDLNet_TCP_Send(connected_socket, &click_map_packet, sizeof(ClickMapPacket)) != sizeof(ClickMapPacket))
-        SDL_net_error("Send position packet length not match!\n%s\n", SDL_GetError());
+    p_click_map_packet->type = TYPE_CLICK_MAP;
+    p_click_map_packet->click_type = click_type;
+    p_click_map_packet->pos_y = y;
+    p_click_map_packet->pos_x = x;
 }
 
-/**
- * @brief Receive the click map packet.
- * 
- * @param p_y   Points to column number will be filled in.
- * @param p_x   Points to row number will be filled in.
- * 
- * @return The type of the click packet.
- * 
- * @warning When should the function be called:
- * This function must be called after "recv_packet_type" is called,
- * and the packet type is "TYPE_MAP_POS".
- */
-ClickType recv_click_map_packet(unsigned short *p_y, unsigned short *p_x)
+static void fill_mouse_move_packet(MouseMovePacket *p_mouse_move_packet, unsigned int y, unsigned int x)
 {
-    ClickMapPacket click_map_packet;
-    if (SDLNet_TCP_Recv(connected_socket, &click_map_packet, sizeof(ClickMapPacket)) != sizeof(ClickMapPacket))
-        SDL_net_error("Recv position packet lenght not match!\n%s\n", SDL_GetError());
-    *p_y = click_map_packet.position_packet.pos_y;
-    *p_x = click_map_packet.position_packet.pos_x;
-    return click_map_packet.click_type;
+    p_mouse_move_packet->type = TYPE_MOUSE_MOVE;
+    p_mouse_move_packet->pos_y = y;
+    p_mouse_move_packet->pos_x = x;
 }
+
+//-------------------------------------------------------------------
+// Send packet
+//-------------------------------------------------------------------
+
+static void send_mymines_packet(MyMinesPacket *p_mymines_packet)
+{
+    if (SDLNet_TCP_Send(connected_socket, p_mymines_packet, sizeof(MyMinesPacket)) != sizeof(MyMinesPacket))
+        SDL_net_error("Send mymines packet len not match!\n%s\n", SDL_GetError());
+}
+
+void send_seed_key_packet(Uint64 key, Uint8 key_size)
+{
+    MyMinesPacket mymines_packet;
+    fill_seed_key_packet(&mymines_packet.seed_key_packet, key, key_size);
+    send_mymines_packet(&mymines_packet);
+}
+
+void send_settings_packet(Settings *p_settings)
+{
+    MyMinesPacket mymines_packet;
+    fill_settings_packet(&mymines_packet.settings_packet, p_settings);
+    send_mymines_packet(&mymines_packet);
+}
+
+void send_click_map_packet(ClickType click_type, unsigned int y, unsigned int x)
+{
+    MyMinesPacket mymines_packet;
+    fill_click_map_packet(&mymines_packet.click_map_packet, click_type, y, x);
+    send_mymines_packet(&mymines_packet);
+}
+
+void send_mouse_move_packet(unsigned int y, unsigned int x)
+{
+    MyMinesPacket mymines_packet;
+    fill_mouse_move_packet(&mymines_packet.mouse_move_packet, y, x);
+    send_mymines_packet(&mymines_packet);
+}
+
+void send_quit_packet(void)
+{
+    MyMinesPacket mymines_packet;
+    mymines_packet.type = TYPE_QUIT;
+    send_mymines_packet(&mymines_packet);
+}
+
+//-------------------------------------------------------------------
+// Receive MyMinesPacket packet
+//-------------------------------------------------------------------
+
+void recv_mymines_packet(MyMinesPacket *p_mymines_packet)
+{
+    if (SDLNet_TCP_Recv(connected_socket, p_mymines_packet, sizeof(MyMinesPacket)) != sizeof(MyMinesPacket))
+        SDL_net_error("Recv mymines packet len not match!\n%s\n", SDL_GetError());
+}
+
+//-------------------------------------------------------------------
+// Launch as server or client
+//-------------------------------------------------------------------
 
 /**
  * @brief Listen on port and wait for connection, send the seed key and settings, add socket to socket set.
  * 
  * @param port The port to listen on.
- * @param p_seed_key_packet Point to the seed key packet will be sent.
+ * @param key The seed key will be sent.
+ * @param key_size The size of key will be sent.
  * @param p_settings Point to the settings will be sent.
  * 
  * @warning If the game is the server,
- * the function must be called before ANY send and recv function in this source file.
+ * the function must be called before ANY send and recv function.
  */
-void host_game(Uint16 port, SeedKeyPacket *p_seed_key_packet, Settings *p_settings)
+void host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings)
 {
     IPaddress listen_addr;
     server_resolve_host(&listen_addr, port);
@@ -167,10 +196,8 @@ void host_game(Uint16 port, SeedKeyPacket *p_seed_key_packet, Settings *p_settin
         SDL_net_error("Can't resovle peer addr!\n");
     SDL_Log("Remode addr: %s\n", peer_name);
 
-    if (SDLNet_TCP_Send(connected_socket, p_seed_key_packet, sizeof(SeedKeyPacket)) != sizeof(SeedKeyPacket))
-        SDL_net_error("Send seed_key_packet length not match!\n%s\n", SDL_GetError());
-    if (SDLNet_TCP_Send(connected_socket, p_settings, sizeof(Settings)) != sizeof(Settings))
-        SDL_net_error("Send settings length not match!\n%s\n", SDL_GetError());
+    send_seed_key_packet(key, key_size);
+    send_settings_packet(p_settings);
 
     socket_set = SDLNet_AllocSocketSet(1);
     SDLNet_TCP_AddSocket(socket_set, connected_socket);
@@ -181,13 +208,14 @@ void host_game(Uint16 port, SeedKeyPacket *p_seed_key_packet, Settings *p_settin
  * 
  * @param host A hostname or IP to connect with the server.
  * @param port The server's listening port number.
- * @param p_seed_key_packet Points to seed key packet will be fileed in.
- * @param p_settings Points to settings will be fileed in.
+ * @param p_key Points to key will be filled in.
+ * @param p_key_size Points to key size will be filled in.
+ * @param p_settings Points to settings will be filled in.
  * 
  * @warning If the game is the client,
- * the function must be called before ANY send and recv function in this source file.
+ * the function must be called before ANY send and recv function.
  */
-void join_game(const char *host, Uint16 port, SeedKeyPacket *p_seed_key_packet, Settings *p_settings)
+void join_game(const char *host, Uint32 port, Uint64 *p_key, Uint8 *p_key_size, Settings *p_settings)
 {
     IPaddress server_addr;
     clinent_resolve_host(&server_addr, host, port);
@@ -198,16 +226,30 @@ void join_game(const char *host, Uint16 port, SeedKeyPacket *p_seed_key_packet, 
     while(!connected_socket)
         connected_socket = SDLNet_TCP_Open(&server_addr);
 
-    if (SDLNet_TCP_Recv(connected_socket, p_seed_key_packet, sizeof(SeedKeyPacket)) != sizeof(SeedKeyPacket))
-        SDL_net_error("Recv seed_key_packet length not match!\n%s\n", SDL_GetError());
-    if (SDLNet_TCP_Recv(connected_socket, p_settings, sizeof(Settings)) != sizeof(Settings))
-        SDL_net_error("Recv settings length not match!\n%s\n", SDL_GetError());
-    
-    SDL_Log("key: %lu, key_size: %hhu", p_seed_key_packet->key, p_seed_key_packet->key_size);
-    
     socket_set = SDLNet_AllocSocketSet(1);
     SDLNet_TCP_AddSocket(socket_set, connected_socket);
+
+    MyMinesPacket mymines_packet;
+    while (!is_connected_socket_ready())
+        ;
+    recv_mymines_packet(&mymines_packet);
+    if (mymines_packet.type != TYPE_SEED_KEY)
+        Error("Packet should be a TYPE_SEED_KEY packet, not %hhu!\n", mymines_packet.type);
+    *p_key = mymines_packet.seed_key_packet.key;
+    *p_key_size = mymines_packet.seed_key_packet.key_size;
+    SDL_Log("key: %llu, key_size: %hhu", *p_key, *p_key_size);
+
+    while (!is_connected_socket_ready())
+        ;
+    recv_mymines_packet(&mymines_packet);
+    if (mymines_packet.type != TYPE_SETTINGS)
+        Error("Packet should be a TYPE_SETTINGS packet, not %hhu!\n", mymines_packet.type);
+    memcpy(p_settings, &mymines_packet.settings_packet.settings, sizeof(Settings));
 }
+
+//-------------------------------------------------------------------
+// Finish stuff
+//-------------------------------------------------------------------
 
 /**
  * @brief Finish connection and SDL_Net.
