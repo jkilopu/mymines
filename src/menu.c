@@ -5,17 +5,16 @@
  */
 #include "menu.h"
 #include "SDL.h"
+#include "SDL_stdinc.h"
 #include "render.h"
 #include "block.h"
 #include "button.h"
 #include "timer.h"
 #include "fatal.h"
-#include <stdbool.h>
 
 static SDL_Texture *menu; ///< The menu texture.
 extern SDL_Texture *block_textures[]; ///< Used as options and digits.
 extern SDL_Renderer *main_renderer;
-extern FILE *output;
 
 //-------------------------------------------------------------------
 // Functions
@@ -52,7 +51,7 @@ void show_menu_and_get_settings(Settings *p_s)
     p_s->map_height = digits[2].data * 10 + digits[3].data;
     p_s->n_mine = digits[4].data * 10 + digits[5].data;
     if (!p_s->map_width || !p_s->map_height || !p_s->n_mine || p_s->n_mine >= p_s->map_width * p_s->map_height)
-        Error("Invalid option!");
+        Error("Invalid option!\n");
     p_s->block_size = MAIN_WIN_SIZE / (p_s->map_width > p_s->map_height ? p_s->map_width : p_s->map_height);
     p_s->window_height = p_s->map_height * p_s->block_size; 
     p_s->window_width = p_s->map_width * p_s->block_size + TIME_REGION_WIDTH;
@@ -65,12 +64,12 @@ void show_menu_and_get_settings(Settings *p_s)
  * @param bs The button blocks.
  * @param num The number of ds and bs.
  */
-static void draw_menu(Digit ds[], Button bs[], int num)
+static void draw_menu(Digit ds[], Button bs[], unsigned int num)
 {
     menu = load_texture("res/menu.gif");
     draw(main_renderer, menu, NULL, NULL);
     
-    for (int i = 0; i < num; i++)
+    for (unsigned int i = 0; i < num; i++)
     {
         draw(main_renderer, block_textures[T_BACKGROUND], NULL, &ds[i].r);
         SDL_Rect tmp_r = bs[i].r;
@@ -91,23 +90,21 @@ static void draw_menu(Digit ds[], Button bs[], int num)
  * @param bs The buttons will be pressed.
  * @param num The number of ds and bs.
  */
-static void menu_main(Digit ds[], Button bs[], int num)
+static void menu_main(Digit ds[], Button bs[], unsigned int num)
 {
-    bool done = false;
+    SDL_bool done = SDL_FALSE;
     SDL_Event e;
     while (!done)
     {
         if (!SDL_WaitEvent(&e))
-            SDL_output_fatal_error("SDL event error!\n%s\n", SDL_GetError());
-        if (e.type == SDL_MOUSEBUTTONDOWN)
+            SDL_other_fatal_error("SDL event error!\n%s\n", SDL_GetError());
+        if (e.type == SDL_MOUSEBUTTONUP)
         {
-            int y = 0, x = 0;
-            int state = SDL_GetMouseState(&x, &y);
             int selected = -1;
-            if (state = SDL_BUTTON(SDL_BUTTON_LEFT))
+            if (e.button.state == SDL_RELEASED && e.button.button == SDL_BUTTON_LEFT)
             {
-                SDL_Point point = {x, y};
-                for (int i = 0; i < num; i++)
+                SDL_Point point = {e.button.x, e.button.y};
+                for (unsigned int i = 0; i < num; i++)
                 {
                     SDL_Rect tmp_r = bs[i].r;
                     tmp_r.y += bs[i].y_interval;
@@ -131,7 +128,7 @@ static void menu_main(Digit ds[], Button bs[], int num)
                 SDL_RenderPresent(main_renderer);
             }
             else
-                done = true;
+                done = SDL_TRUE;
         }
         else if(e.type == SDL_QUIT)
         {
@@ -140,4 +137,14 @@ static void menu_main(Digit ds[], Button bs[], int num)
             exit(0);
         }
     }
+}
+
+/**
+ * @brief Show the gameover menu and wait for user input.
+ */
+void game_over_menu(void)
+{
+    SDL_RenderPresent(main_renderer); ///< show mines
+    SDL_Delay(5000);
+    SDL_RenderClear(main_renderer);
 }

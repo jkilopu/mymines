@@ -22,7 +22,7 @@
 #ifndef __BUTTON_H
 #define __BUTTON_H
 
-#include <stdint.h>
+#include "SDL_stdinc.h"
 #include "SDL.h"
 
 //-------------------------------------------------------------------
@@ -42,8 +42,8 @@
 typedef struct _button
 {
     SDL_Rect r;
-    unsigned short y_interval; ///< The y interval between buttons.
-    uint8_t *p_data; ///< To change the data.
+    unsigned int y_interval; ///< The y interval between buttons.
+    Uint8 *p_data; ///< To change the data.
 } Button;
 
 /**
@@ -52,7 +52,7 @@ typedef struct _button
 typedef struct _digit
 {
     SDL_Rect r;
-    uint8_t data; ///< The game data.
+    Uint8 data; ///< The game data.
 } Digit;
 
 #endif

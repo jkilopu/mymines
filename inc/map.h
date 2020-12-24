@@ -14,8 +14,9 @@
  * 
  * Map Blocks Value:
  *      0 ~ 8        The value represents the number of mines around the closed block.
- *      '0' ~ '8'    The value represents the number of mines around the opend block.
+ *      '0' ~ '8'    The value represents the number of mines around the opened block.
  *      9            The mine.
+ *      10           The exploded mine.
  * 
  * Map Blocks Flag:
  *      The flag bit is at 6th bit of the block. For details, see "Flag Manipulate Macros" below.
@@ -46,10 +47,12 @@
 //-------------------------------------------------------------------
 
 #define has_mine(y, x, map) (map->arr[y][x] == MINE)
-#define in_range(y, x, up, left, down, right) (y >= up && x >= left && y < down && x < right)
-#define in_map_range(y, x, map) in_range(y, x, 0, 0, map->col, map->row)
+#define in_range(y, x, down, right) (y < down && x < right)
+#define in_map_range(y, x, map) in_range(y, x, map->col, map->row)
 #define is_empty(y, x, map) (map->arr[y][x] == '0')
-#define is_shown(y, x, map) (map->arr[y][x] >= '0' && map->arr[y][x] <= '9')
+#define is_num(y, x, map) (map->arr[y][x] >= 0 && map->arr[y][x] <= 8)
+#define is_shown_num(y, x, map) (map->arr[y][x] >= '0' && map->arr[y][x] <= '8')
+#define is_exploded_mine(y, x, map) (map->arr[y][x] == EXPLODED_MINE)
 #define get_mine_num(y, x, map) (map->arr[y][x] - '0') ///< Should only used for opened blocks
 
 /**
@@ -75,21 +78,21 @@
 /**
  * @brief Used to record map status.
  */
-struct _map {
+typedef struct _map {
     char **arr;                 ///< The two dimension array.
-    unsigned short col, row;    ///< The column and row of the map.
-};
-typedef struct _map* Map;
+    unsigned int col, row;    ///< The column and row of the map.
+} *Map;
 
 //-------------------------------------------------------------------
 // Prototypes
 //-------------------------------------------------------------------
 
-Map create_map(unsigned short col, unsigned short row);
-void put_mines(Map map, unsigned short num);
-void remove_mine(Map map, short y, short x);
-unsigned short cnt_mines(Map map, short y, short x);
-unsigned short cnt_flags(Map map, short y, short x);
+Map create_map(unsigned int col, unsigned int row);
+void put_mines(Map map, unsigned int num);
+void remove_mine(Map map, unsigned int y, unsigned int x);
+unsigned int cnt_mines(Map map, unsigned int y, unsigned int x);
+unsigned int cnt_flags(Map map, unsigned int y, unsigned int x);
+void unhidden_map(Map map);
 void clear_map(Map map);
 void destroy_map(Map map);
 
