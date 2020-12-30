@@ -28,7 +28,7 @@ static SDLNet_SocketSet socket_set;
 static void server_resolve_host(IPaddress *p_addr, Uint32 port)
 {
     if (SDLNet_ResolveHost(p_addr, NULL, port) < 0)
-        SDL_net_error("Can't resolve server host: port: %hu!\n%s\n", port, SDL_GetError());
+        SDL_net_error("Can't resolve server host: port: %hu!\n%s\n", port, SDLNet_GetError());
 }
 
 /**
@@ -41,7 +41,7 @@ static void server_resolve_host(IPaddress *p_addr, Uint32 port)
 static void clinent_resolve_host(IPaddress *p_addr, const char *host, Uint32 port)
 {
     if (SDLNet_ResolveHost(p_addr, host, port) < 0)
-        SDL_net_error("Can't resolve client host: %s:%hu!\n%s\n", host, port,SDL_GetError());
+        SDL_net_error("Can't resolve client host: %s:%hu!\n%s\n", host, port, SDLNet_GetError());
 }
 
 /**
@@ -55,7 +55,7 @@ SDL_bool is_connected_socket_ready(void)
     ///< Since "connected_socket" is the only socket in "socket_set", no need to call "SDLNet_SocketReady".
 
     if (ready_socket_num < 0)
-        SDL_net_error("Check socket sets failed!\n%s\n", SDL_GetError());
+        SDL_net_error("Check socket sets failed!\n%s\n", SDLNet_GetError());
     if (ready_socket_num == 0)
         return SDL_FALSE;
     return SDL_TRUE;
@@ -107,7 +107,7 @@ static void fill_mouse_move_packet(MouseMovePacket *p_mouse_move_packet, unsigne
 static void send_mymines_packet(MyMinesPacket *p_mymines_packet)
 {
     if (SDLNet_TCP_Send(connected_socket, p_mymines_packet, sizeof(MyMinesPacket)) != sizeof(MyMinesPacket))
-        SDL_net_error("Send mymines packet len not match!\n%s\n", SDL_GetError());
+        SDL_net_error("Send mymines packet len not match!\n%s\n", SDLNet_GetError());
 }
 
 void send_seed_key_packet(Uint64 key, Uint8 key_size)
@@ -152,7 +152,7 @@ void send_quit_packet(void)
 void recv_mymines_packet(MyMinesPacket *p_mymines_packet)
 {
     if (SDLNet_TCP_Recv(connected_socket, p_mymines_packet, sizeof(MyMinesPacket)) != sizeof(MyMinesPacket))
-        SDL_net_error("Recv mymines packet len not match!\n%s\n", SDL_GetError());
+        SDL_net_error("Recv mymines packet len not match!\n%s\n", SDLNet_GetError());
 }
 
 //-------------------------------------------------------------------
@@ -177,7 +177,7 @@ void host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings)
 
     TCPsocket server_listen_socket = SDLNet_TCP_Open(&listen_addr);
     if (server_listen_socket == NULL)
-        SDL_net_error("Can't open server listen socket!\n%s\n", SDL_GetError());
+        SDL_net_error("Can't open server listen socket!\n%s\n", SDLNet_GetError());
 
     /** TODO: 1. Draw listen status 
      *        2. Allow user to quit.
