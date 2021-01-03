@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
             unsigned int y, x;
             switch(event.type)
             {
-                case SDL_MOUSEBUTTONUP: ///< Button up will return state 0.
+                case SDL_MOUSEBUTTONUP: ///< PairButton up will return state 0.
                     y = event.button.y;
                     x = event.button.x;
                     if (event.button.clicks == 1 && event.button.state == SDL_RELEASED)

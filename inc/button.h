@@ -1,15 +1,15 @@
 /**
  * @file button.h
  * @author jkilopu
- * @brief Header only module. Provied type defination and manipulate macros of "Digit" and "Button".
+ * @brief Header only module. Provied type defination and manipulate macros of "Character" and "PairButton".
  * 
- * @details About Button and Digit in mymines:
- * A pair of buttons and digits in mymines look like this:
+ * @details About PairButton and Character in mymines:
+ * A pair of buttons and characters in mymines look like this:
  * ****        (The increase button rect)
  * *  *
  * ****
  *             (This line is the interval)
- * ****         Digit rect (to be changed by buttons)
+ * ****         Character rect (to be changed by buttons)
  * * 1*
  * ****
  *             (This line is the interval)
@@ -26,33 +26,33 @@
 #include "SDL.h"
 
 //-------------------------------------------------------------------
-// Digit Manipulate Macros
+// Character Manipulate Macros
 //-------------------------------------------------------------------
 
-#define add_digit(p_x) ((*p_x) == 9 ? (*p_x) = 0 : (*p_x)++)
-#define reduce_digit(p_x) ((*p_x) == 0 ? (*p_x) = 9 : (*p_x)--)
+#define add_character(p_x) ((*p_x) == 9 ? (*p_x) = 0 : (*p_x)++)
+#define reduce_character(p_x) ((*p_x) == 0 ? (*p_x) = 9 : (*p_x)--)
 
 //-------------------------------------------------------------------
 // Type Definations
 //-------------------------------------------------------------------
 
 /**
- * @brief Button on the window that is used to change game data, pressed by user.
+ * @brief PairButton on the window that is used to change game data, pressed by user.
  */
-typedef struct _button
+typedef struct _pair_button
 {
     SDL_Rect r;
     unsigned int y_interval; ///< The y interval between buttons.
-    Uint8 *p_data; ///< To change the data.
-} Button;
+    char *p_data;           ///< To change the data.
+} PairButton;
 
 /**
- * @brief Digit on the window that is used to record game data.
+ * @brief Character on the window that is used to record game data.
  */
-typedef struct _digit
+typedef struct _character
 {
     SDL_Rect r;
-    Uint8 data; ///< The game data.
-} Digit;
+    char data; ///< The game data.
+} Character;
 
 #endif
