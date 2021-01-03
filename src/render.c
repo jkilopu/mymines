@@ -19,6 +19,7 @@
 
 SDL_Renderer *main_renderer;
 static SDL_Window *main_window;
+
 extern const char *block_image_paths[BLOCK_TEXTURE_NUM];
 extern SDL_Texture *block_textures[BLOCK_TEXTURE_NUM];
 extern SDL_Texture *remote_cursor_texture;
@@ -48,35 +49,13 @@ void init_sdl(void)
 }
 
 /**
- * @brief Load SDL_Texture from path.
- * 
- * @param path The path of the image.
- * 
- * @return The new SDL_Texture.
- */
-SDL_Texture *load_texture(const char *path)
-{
-    SDL_Texture* new_texture = NULL;
-    SDL_Surface* loaded_surface = IMG_Load(path);
-
-    if(loaded_surface == NULL)
-        SDL_render_fatal_error("Unable to load image %s!\n%s\n", path, IMG_GetError());
-    new_texture = SDL_CreateTextureFromSurface(main_renderer, loaded_surface);
-    if(new_texture == NULL)
-        SDL_render_fatal_error("Unable to create texture from %s!\n%s\n", path, SDL_GetError());
-
-    SDL_FreeSurface(loaded_surface);
-    return new_texture;
-}
-
-/**
  * @brief Load media required throwgh out the game.
  */
 void load_media(void)
 {
     for (int i = 0; i < BLOCK_TEXTURE_NUM; i++)
-        block_textures[i] = load_texture(block_image_paths[i]);
-    remote_cursor_texture = load_texture(REMOTE_CURSOR_IMG_PATH);
+        block_textures[i] = IMG_LoadTexture(main_renderer, block_image_paths[i]);
+    remote_cursor_texture = IMG_LoadTexture(main_renderer, REMOTE_CURSOR_IMG_PATH);
 }
 
 /**
