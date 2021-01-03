@@ -11,7 +11,10 @@ build/
 .vs/
 out/
 
-#core
+# VSCodeCounter
+.VSCodeCounter
+
+# core
 core
 
 # Object files
