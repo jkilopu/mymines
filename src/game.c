@@ -60,7 +60,7 @@ Game setup(int argc, char *argv[])
     load_media();
 
     Uint8 game_mode = 0;
-    const char *ip = NULL;
+    char ip[MAX_IP_LEN + 1];
     Uint32 port = 0;
 
     /** TODO: User choose the game mode */
@@ -73,14 +73,12 @@ Game setup(int argc, char *argv[])
         if (argc == 3)
         {
             set_client_mode(game_mode);
-            /** TODO: User input ip */
-            ip = argv[1];
-            port = atoi(argv[2]);
+            ip_port_menu(game_mode, ip, &port);
         }
         else
         {
             set_server_mode(game_mode);
-            port = atoi(argv[1]);
+            ip_port_menu(game_mode, NULL, &port);
         }
     }
 
@@ -105,7 +103,7 @@ void connect_and_complete_setup(Game game, const char *ip, Uint32 port)
     if (!is_lan_mode(game->settings.game_mode))
     {
         prng_rc4_seed_time();
-        show_menu_and_get_settings(&game->settings);
+        settings_menu(&game->settings);
         return;
     }
 
@@ -120,7 +118,7 @@ void connect_and_complete_setup(Game game, const char *ip, Uint32 port)
         key_size = sizeof(time_t);
         prng_rc4_seed_bytes(&key, key_size);
 
-        show_menu_and_get_settings(&game->settings);
+        settings_menu(&game->settings);
 
         host_game(port, key, key_size, &game->settings);
     }
@@ -233,28 +231,14 @@ static void show_whole_map(Map map)
  */
 static void show_block_in_cursor(Map map, unsigned int cursor_y, unsigned int cursor_x)
 {
-    unsigned int y = cursor_y, x = cursor_x;
-    window2map(&y, &x);
-    if (in_map_range(y, x, map))
-        show_block_in_map_without_mine(map, y, x);
+    unsigned int down_y = cursor_y + CURSOR_HEIGHT, right_x = cursor_x + CURSOR_WIDTH;
+    window2map(&cursor_y, &cursor_x);
+    window2map(&down_y, &right_x);
 
-    y = cursor_y + CURSOR_HEIGHT;
-    x = cursor_x;
-    window2map(&y, &x);
-    if (in_map_range(y, x, map))
-        show_block_in_map_without_mine(map, y, x);
-
-    y = cursor_y;
-    x = cursor_x + CURSOR_WIDTH;
-    window2map(&y, &x);
-    if (in_map_range(y, x, map))
-        show_block_in_map_without_mine(map, y, x);
-
-    y = cursor_y + CURSOR_HEIGHT;
-    x = cursor_x + CURSOR_WIDTH;
-    window2map(&y, &x);
-    if (in_map_range(y, x, map))
-        show_block_in_map_without_mine(map, y, x);
+    for (unsigned int i = cursor_y; i <= down_y; i++)
+        for (unsigned int j = cursor_x; j <= right_x; j++)
+            if (in_map_range(i, j, map))
+                show_block_in_map_without_mine(map, i, j);
 }
 
 /**
@@ -425,7 +409,8 @@ void restart(Game game)
     game->is_first_click = SDL_TRUE;
     clear_map(game->map);
     show_whole_map(game->map);
-    put_mines(game->map, game->settings.n_mine);    
+    put_mines(game->map, game->settings.n_mine);
+    SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
 }
 
 /**

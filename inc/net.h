@@ -23,6 +23,9 @@
 #include "SDL_net.h"
 #include "SDL_stdinc.h"
 #include "game.h"
+ 
+#define MAX_IP_LEN 15
+#define MAX_PORT_LEN 5
 
 //-------------------------------------------------------------------
 // Type Definations
