@@ -31,11 +31,14 @@ void set_timer(Timer *p_timer)
  * @brief Set the timer block pos.
  * 
  * @param p_timer The timer.
+ * @param win_width The window width.
+ * @param win_height The window height.
  */
-void set_timer_pos(Timer *p_timer, unsigned int win_x, unsigned int win_y)
+void set_timer_pos(Timer *p_timer, unsigned int win_width, unsigned int win_height)
 {
-    p_timer->time_block_x = win_x - TIME_REGION_WIDTH + TIME_REGION_WIDTH / 4;
-    p_timer->time_block_y = win_y / 3;
+    p_timer->timer_block.h = p_timer->timer_block.w = win_height / 15;
+    p_timer->timer_block.y = win_height / 2 - (p_timer->timer_block.h * 4 + p_timer->timer_block.h / 4 * 2 + p_timer->timer_block.h / 3) / 2;
+    p_timer->timer_block.x = win_width - TIME_REGION_WIDTH + TIME_REGION_WIDTH / 2 - p_timer->timer_block.w / 2;
 }
 
 /**
@@ -94,13 +97,12 @@ void draw_timer(Timer *p_timer)
     unsigned int secs_lo = (p_timer->time_passed % 60) % 10;
     unsigned int mins_hi = (p_timer->time_passed / 60) / 10;
     unsigned int secs_hi = (p_timer->time_passed % 60) / 10;
-    unsigned int block_size = (TIME_REGION_WIDTH < p_timer->time_block_x ? TIME_REGION_WIDTH : p_timer->time_block_y) / 3;
-    SDL_Rect dst_r = {p_timer->time_block_x, p_timer->time_block_y, block_size, block_size};
+    SDL_Rect dst_r = {p_timer->timer_block.x, p_timer->timer_block.y, p_timer->timer_block.w, p_timer->timer_block.h};
     draw(main_renderer, block_textures[mins_hi], NULL, &dst_r);
-    dst_r.y += block_size + block_size / 4;
+    dst_r.y += dst_r.h + dst_r.h / 4;
     draw(main_renderer, block_textures[mins_lo], NULL, &dst_r);
-    dst_r.y += block_size + block_size / 3;
+    dst_r.y += dst_r.h + dst_r.h / 3;
     draw(main_renderer, block_textures[secs_hi], NULL, &dst_r);
-    dst_r.y += block_size + block_size / 4;
+    dst_r.y += dst_r.h + dst_r.h / 4;
     draw(main_renderer, block_textures[secs_lo], NULL, &dst_r);
 }
