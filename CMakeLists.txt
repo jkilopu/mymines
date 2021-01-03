@@ -34,14 +34,14 @@ if(WIN32)
 elseif(LINUX)
     message(STATUS ">>> Linux")
 else()
-    message(STATUS ">>> Unknown os")
+    message(STATUS ">>> Unknown OS")
 endif()
 
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2_net REQUIRED)
 
-message(STATUS "incDir: ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS}")
+message(STATUS "incDir: ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_NET_INCLUDE_DIRS}")
 
 # 添加子目录，使子目录中的CMakelists.txt被执行
 add_subdirectory(prng_lib)
