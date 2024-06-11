@@ -13,7 +13,6 @@
 #include "menu.h"
 #include "render.h"
 #include "timer.h"
-#include "prng_alleged_rc4.h"
 #include "net.h"
 #include "SDL_stdinc.h"
 #include "fatal.h"
@@ -34,17 +33,13 @@ extern const int directions[8][2];
 //-------------------------------------------------------------------
 
 /**
- * @brief Create a game with game mode.
+ * @brief Create a empty game.
  * 
- * @param p_settings The mode settings of the game.
- * 
- * @return The new game with empty settings and map.
+ * @return The new empty game.
  */
-static Game create_game_with_mode(Uint8 game_mode)
+static Game create_empty_game(void)
 {
-    Game new_game = calloc_fatal(1 ,sizeof(struct _game), "create_game - new_game");
-
-    new_game->settings.game_mode = game_mode;
+    Game new_game = calloc_fatal(1 ,sizeof(struct _game), "create_empty_game - new_game");
 
     return new_game;
 }
@@ -54,79 +49,18 @@ static Game create_game_with_mode(Uint8 game_mode)
  * 
  * @return The new game.
  */
-Game setup(int argc, char *argv[])
+Game setup(void)
 {
     init_sdl();
     load_media();
 
-    Uint8 game_mode = 0;
-    char ip[MAX_IP_LEN + 1];
-    Uint32 port = 0;
+    Game game = create_empty_game();
 
-    /** TODO: User choose the game mode */
-    if (argc == 1)
-        set_local_mode(game_mode);
-    else
-    {
-        set_lan_mode(game_mode);
-        /** TODO: Graphic menu to choose client or server */
-        if (argc == 3)
-        {
-            set_client_mode(game_mode);
-            ip_port_menu(game_mode, ip, &port);
-        }
-        else
-        {
-            set_server_mode(game_mode);
-            ip_port_menu(game_mode, NULL, &port);
-        }
-    }
-
-    Game game = create_game_with_mode(game_mode);
-    connect_and_complete_setup(game, ip, port);
+    menu_main(game);
 
     set_block_size(game->settings.block_size);
-    set_main_window_size(game->settings.window_width, game->settings.window_height);
     set_timer_pos(&game->timer, game->settings.window_width, game->settings.window_height);
     return game;
-}
-
-/**
- * @brief Start local mode or lan mode, as server or client.
- * 
- * @param game The game with game mode setup.
- * @param ip Used only for client mode.
- * @param port The port to listen on or connect to.
- */
-void connect_and_complete_setup(Game game, const char *ip, Uint32 port)
-{
-    if (!is_lan_mode(game->settings.game_mode))
-    {
-        prng_rc4_seed_time();
-        settings_menu(&game->settings);
-        return;
-    }
-
-    if (SDLNet_Init() < -1)
-        SDL_net_error("SDL_Net could not initialize!\n%s\n", SDL_GetError());
-
-    Uint64 key;
-    Uint8 key_size;
-    if (is_server_mode(game->settings.game_mode))
-    {
-        key = time(NULL);
-        key_size = sizeof(time_t);
-        prng_rc4_seed_bytes(&key, key_size);
-
-        settings_menu(&game->settings);
-
-        host_game(port, key, key_size, &game->settings);
-    }
-    else
-    {
-        join_game(ip, port, &key, &key_size, &game->settings);
-        prng_rc4_seed_bytes(&key, key_size);
-    }
 }
 
 /**
@@ -410,6 +344,7 @@ void restart(Game game)
     clear_map(game->map);
     show_whole_map(game->map);
     put_mines(game->map, game->settings.n_mine);
+    SDL_PumpEvents(); ///< Must call this function before flushing events.
     SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
 }
 

@@ -29,21 +29,31 @@
 // Character Manipulate Macros
 //-------------------------------------------------------------------
 
-#define add_character(p_x) ((*p_x) == 9 ? (*p_x) = 0 : (*p_x)++)
-#define reduce_character(p_x) ((*p_x) == 0 ? (*p_x) = 9 : (*p_x)--)
+#define add_character(p) ((*(char *)p) == 9 ? (*(char *)p) = 0 : (*(char *)p)++)
+#define reduce_character(p) ((*(char *)p) == 0 ? (*(char *)p) = 9 : (*(char *)p)--)
 
 //-------------------------------------------------------------------
 // Type Definations
 //-------------------------------------------------------------------
 
+typedef void (*SelectFunc)(void *, unsigned short);
+
+typedef struct _option_button {
+    SDL_Rect *buttons;
+    SDL_Texture **textures;
+    void *p_option;
+    unsigned short num;
+    SelectFunc selector;
+} OptionButton;
+
 /**
- * @brief PairButton on the window that is used to change game data, pressed by user.
+ * @brief PairButton on the window that is used to change game data.
  */
 typedef struct _pair_button
 {
     SDL_Rect r;
     unsigned int y_interval; ///< The y interval between buttons.
-    char *p_data;           ///< To change the data.
+    void *p_data;           ///< To change the data.
 } PairButton;
 
 /**
@@ -52,7 +62,7 @@ typedef struct _pair_button
 typedef struct _character
 {
     SDL_Rect r;
-    char data; ///< The game data.
+    char ch;
 } Character;
 
 #endif

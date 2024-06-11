@@ -122,7 +122,7 @@ SDL_COMPILE_TIME_ASSERT(MyMinesPacket, sizeof(MyMinesPacket) == 32);
 //-------------------------------------------------------------------
 
 static void server_resolve_host(IPaddress *p_addr, Uint32 port);
-static void clinent_resolve_host(IPaddress *p_addr, const char *host, Uint32 port);
+static void client_resolve_host(IPaddress *p_addr, const char *host, Uint32 port);
 SDL_bool is_connected_socket_ready(void);
 
 static void fill_seed_key_packet(SeedKeyPacket *p_seed_key_packet, Uint64 key, Uint8 key_size);
@@ -140,8 +140,8 @@ void send_quit_packet(void);
 
 void recv_mymines_packet(MyMinesPacket *p_mymines_packet);
 
-void host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings);
-void join_game(const char *host, Uint32 port, Uint64 *p_key, Uint8 *p_key_size, Settings *p_settings);
+SDL_bool host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings);
+SDL_bool join_game(const char *host, Uint32 port, Uint64 *p_key, Uint8 *p_key_size, Settings *p_settings);
 
 void finish_sdl_net(void);
 

@@ -12,15 +12,15 @@
 #include "net.h"
 #include "fatal.h"
 
-extern SDL_Renderer *main_renderer;
+extern Drawer drawer;
 
 int main(int argc, char *argv[])
 {
-    Game game = setup(argc, argv);
+    Game game = setup();
 
-    SDL_RenderClear(main_renderer);
+    SDL_RenderClear(drawer.renderer);
     create_map_in_game(game);
-    SDL_RenderPresent(main_renderer);
+    SDL_RenderPresent(drawer.renderer);
 
     SDL_Event event;
     SDL_bool quit = SDL_FALSE;
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
                             default:
                                 break;
                         }
-                        SDL_RenderPresent(main_renderer);
+                        SDL_RenderPresent(drawer.renderer);
                     }
                     break;
                 case SDL_MOUSEMOTION:
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
                     unsigned int *p_time_passed = event.user.data1;
                     (*p_time_passed)++;
                     draw_timer(&game->timer);
-                    SDL_RenderPresent(main_renderer);
+                    SDL_RenderPresent(drawer.renderer);
                     break;
                 }
                 case SDL_QUIT:
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         }
         if (is_lan_mode(game->settings.game_mode))
             if (handle_recved_packet(game))
-                SDL_RenderPresent(main_renderer);
+                SDL_RenderPresent(drawer.renderer);
     }
 
     wrapup(game);

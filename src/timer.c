@@ -8,7 +8,7 @@
 #include "render.h"
 #include "fatal.h"
 
-extern SDL_Renderer *main_renderer;
+extern Drawer drawer;
 extern SDL_Texture *block_textures[];
 
 //-------------------------------------------------------------------
@@ -23,7 +23,7 @@ extern SDL_Texture *block_textures[];
 void set_timer(Timer *p_timer)
 {
     p_timer->time_passed = 0;
-    if(!(p_timer->timer_id = SDL_AddTimer(INTERVAL, timer_callback, &p_timer->time_passed)))
+    if(!(p_timer->timer_id = SDL_AddTimer(TIME_INTERVAL, timer_callback, &p_timer->time_passed)))
         SDL_other_fatal_error("Can't set timer!\n%s\n", SDL_GetError());
 }
 
@@ -85,7 +85,7 @@ Uint32 timer_callback(Uint32 interval, void *param)
 }
 
 /**
- * @brief Draw the timer with the "main_renderer".
+ * @brief Draw the timer with the "drawer.renderer".
  * 
  * @param timer The timer to draw.
  * 
@@ -98,11 +98,11 @@ void draw_timer(Timer *p_timer)
     unsigned int mins_hi = (p_timer->time_passed / 60) / 10;
     unsigned int secs_hi = (p_timer->time_passed % 60) / 10;
     SDL_Rect dst_r = {p_timer->timer_block.x, p_timer->timer_block.y, p_timer->timer_block.w, p_timer->timer_block.h};
-    draw(main_renderer, block_textures[mins_hi], NULL, &dst_r);
+    draw(block_textures[mins_hi], NULL, &dst_r);
     dst_r.y += dst_r.h + dst_r.h / 4;
-    draw(main_renderer, block_textures[mins_lo], NULL, &dst_r);
+    draw(block_textures[mins_lo], NULL, &dst_r);
     dst_r.y += dst_r.h + dst_r.h / 3;
-    draw(main_renderer, block_textures[secs_hi], NULL, &dst_r);
+    draw(block_textures[secs_hi], NULL, &dst_r);
     dst_r.y += dst_r.h + dst_r.h / 4;
-    draw(main_renderer, block_textures[secs_lo], NULL, &dst_r);
+    draw(block_textures[secs_lo], NULL, &dst_r);
 }

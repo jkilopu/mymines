@@ -26,7 +26,7 @@ const char *block_image_paths[BLOCK_TEXTURE_NUM] = {
 };
 SDL_Texture *block_textures[BLOCK_TEXTURE_NUM];
 static unsigned int block_size;
-extern SDL_Renderer *main_renderer;
+extern Drawer drawer;
 
 /**
  * @brief Set the block size.
@@ -55,7 +55,7 @@ void draw_block(BLOCK b, unsigned int y, unsigned int x)
         block_size,
         block_size,
     };
-    draw(main_renderer, block_textures[b], NULL, &dst_r);
+    draw(block_textures[b], NULL, &dst_r);
 }
 
 /**

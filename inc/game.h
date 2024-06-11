@@ -51,13 +51,14 @@ typedef struct _game {
 #define set_client_mode(game_mode) (game_mode &= ~(1 << SERVER_CLIENT_BIT))
 #define is_lan_mode(game_mode) (game_mode & (1 << LAN_LOCAL_BIT))
 #define is_server_mode(game_mode) (game_mode & (1 << SERVER_CLIENT_BIT))
+#define clear_mode(game_mode) (game_mode = 0)
 
 //-------------------------------------------------------------------
 // Prototypes
 //-------------------------------------------------------------------
 
-Game setup(int argc, char *argv[]);
-static Game create_game_with_mode(Uint8 game_mode);
+Game setup(void);
+static Game create_empty_game(void);
 void connect_and_complete_setup(Game game, const char *ip, Uint32 port);
 void create_map_in_game(Game game);
 

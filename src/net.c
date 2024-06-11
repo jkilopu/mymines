@@ -6,6 +6,7 @@
 #include "net.h"
 #include "SDL_net.h"
 #include "game.h"
+#include "menu.h"
 #include "SDL_stdinc.h"
 #include "fatal.h"
 #include "SDL_log.h"
@@ -38,7 +39,7 @@ static void server_resolve_host(IPaddress *p_addr, Uint32 port)
  * @param host A hostname or IP to connect with the server.
  * @param port The server's listening port number.
  */
-static void clinent_resolve_host(IPaddress *p_addr, const char *host, Uint32 port)
+static void client_resolve_host(IPaddress *p_addr, const char *host, Uint32 port)
 {
     if (SDLNet_ResolveHost(p_addr, host, port) < 0)
         SDL_net_error("Can't resolve client host: %s:%hu!\n%s\n", host, port, SDLNet_GetError());
@@ -170,7 +171,7 @@ void recv_mymines_packet(MyMinesPacket *p_mymines_packet)
  * @warning If the game is the server,
  * the function must be called before ANY send and recv function.
  */
-void host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings)
+SDL_bool host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings)
 {
     IPaddress listen_addr;
     server_resolve_host(&listen_addr, port);
@@ -179,28 +180,36 @@ void host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings)
     if (server_listen_socket == NULL)
         SDL_net_error("Can't open server listen socket!\n%s\n", SDLNet_GetError());
 
-    /** TODO: 1. Draw listen status 
-     *        2. Allow user to quit.
-     */
+    SDL_bool finished;
     while (!connected_socket)
+    {
         connected_socket = SDLNet_TCP_Accept(server_listen_socket);
+        finished = host_menu_main();
+        if (!finished)
+            break;
+    }
 
     SDLNet_TCP_Close(server_listen_socket);
 
-    /** TODO: Show the client ip on window */
-    IPaddress *peer_addr = SDLNet_TCP_GetPeerAddress(connected_socket);
-    if (peer_addr == NULL)
-        SDL_net_error("Can't get peer addr!\n");
-    const char *peer_name = SDLNet_ResolveIP(peer_addr);
-    if (peer_name == NULL)
-        SDL_net_error("Can't resovle peer addr!\n");
-    SDL_Log("Remode addr: %s\n", peer_name);
+    if (finished)
+    {
+        /** TODO: Show the client ip on window */
+        IPaddress *peer_addr = SDLNet_TCP_GetPeerAddress(connected_socket);
+        if (peer_addr == NULL)
+            SDL_net_error("Can't get peer addr!\n");
+        const char *peer_name = SDLNet_ResolveIP(peer_addr);
+        if (peer_name == NULL)
+            SDL_net_error("Can't resovle peer addr!\n");
+        SDL_Log("Remode addr: %s\n", peer_name);
 
-    send_seed_key_packet(key, key_size);
-    send_settings_packet(p_settings);
+        send_seed_key_packet(key, key_size);
+        send_settings_packet(p_settings);
 
-    socket_set = SDLNet_AllocSocketSet(1);
-    SDLNet_TCP_AddSocket(socket_set, connected_socket);
+        socket_set = SDLNet_AllocSocketSet(1);
+        SDLNet_TCP_AddSocket(socket_set, connected_socket);
+    }
+
+    return finished;
 }
 
 /**
@@ -215,10 +224,10 @@ void host_game(Uint32 port, Uint64 key, Uint8 key_size, Settings *p_settings)
  * @warning If the game is the client,
  * the function must be called before ANY send and recv function.
  */
-void join_game(const char *host, Uint32 port, Uint64 *p_key, Uint8 *p_key_size, Settings *p_settings)
+SDL_bool join_game(const char *host, Uint32 port, Uint64 *p_key, Uint8 *p_key_size, Settings *p_settings)
 {
     IPaddress server_addr;
-    clinent_resolve_host(&server_addr, host, port);
+    client_resolve_host(&server_addr, host, port);
 
     /** TODO: 1. Draw Connect status 
      *        2. Allow user to quit.
@@ -253,7 +262,10 @@ void join_game(const char *host, Uint32 port, Uint64 *p_key, Uint8 *p_key_size, 
     recv_mymines_packet(&mymines_packet);
     if (mymines_packet.type != TYPE_SETTINGS)
         Error("Packet should be a TYPE_SETTINGS packet, not %hhu!\n", mymines_packet.type);
-    memcpy(p_settings, &mymines_packet.settings_packet.settings, sizeof(Settings));
+
+    *p_settings = mymines_packet.settings_packet.settings;
+
+    return SDL_TRUE;
 }
 
 //-------------------------------------------------------------------

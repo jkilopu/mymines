@@ -9,7 +9,7 @@
 #include "SDL.h"
 #include "render.h"
 
-#define INTERVAL (1000)
+#define TIME_INTERVAL (1000)
 #define TIME_REGION_WIDTH (MAIN_WIN_SIZE / 6)
 
 //-------------------------------------------------------------------
